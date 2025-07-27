@@ -69,17 +69,21 @@ export default {
 				'neon-green': 'hsl(var(--neon-green))',
 				'retro-orange': 'hsl(var(--retro-orange))',
 				'pixel-blue': 'hsl(var(--pixel-blue))',
+				'electric-yellow': 'hsl(var(--electric-yellow))',
+				'cosmic-red': 'hsl(var(--cosmic-red))',
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-secondary': 'var(--gradient-secondary)',
 				'gradient-bg': 'var(--gradient-bg)',
 				'gradient-card': 'var(--gradient-card)',
+				'gradient-cosmic': 'var(--gradient-cosmic)',
 			},
 			boxShadow: {
 				'neon': 'var(--shadow-neon)',
 				'cyber': 'var(--shadow-cyber)',
 				'glow': 'var(--shadow-glow)',
+				'cosmic': 'var(--shadow-cosmic)',
 			},
 			transitionTimingFunction: {
 				'cyber': 'cubic-bezier(0.4, 0, 0.2, 1)',

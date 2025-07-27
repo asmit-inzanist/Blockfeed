@@ -8,55 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark retro/synthwave theme */
-    --background: 240 8% 8%;
-    --foreground: 180 100% 95%;
+    /* Ultra dark cosmic theme - inspired by Web3/Status designs */
+    --background: 220 27% 8%;
+    --foreground: 0 0% 100%;
 
-    --card: 240 8% 12%;
-    --card-foreground: 180 100% 95%;
+    --card: 220 27% 10%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 240 8% 12%;
-    --popover-foreground: 180 100% 95%;
+    --popover: 220 27% 10%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 280 100% 70%;
-    --primary-foreground: 240 8% 8%;
+    --primary-foreground: 220 27% 8%;
 
-    --secondary: 200 100% 60%;
-    --secondary-foreground: 240 8% 8%;
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 220 27% 8%;
 
-    --muted: 240 8% 16%;
-    --muted-foreground: 180 20% 65%;
+    --muted: 220 27% 15%;
+    --muted-foreground: 215 20% 65%;
 
     --accent: 320 100% 75%;
-    --accent-foreground: 240 8% 8%;
+    --accent-foreground: 220 27% 8%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 180 100% 95%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 20% 20%;
-    --input: 240 20% 20%;
+    --border: 220 27% 20%;
+    --input: 220 27% 20%;
     --ring: 280 100% 70%;
 
     --radius: 0.25rem;
 
-    /* Web3/Synthwave custom colors */
+    /* Vibrant Web3 colors - Status/BAYC inspired */
     --neon-cyan: 180 100% 50%;
     --neon-purple: 280 100% 70%;
     --neon-pink: 320 100% 75%;
     --neon-green: 120 100% 50%;
     --retro-orange: 30 100% 60%;
     --pixel-blue: 200 100% 60%;
+    --electric-yellow: 60 100% 50%;
+    --cosmic-red: 0 100% 60%;
 
-    /* Gradients */
+    /* Enhanced gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--neon-purple)), hsl(var(--neon-pink)));
     --gradient-secondary: linear-gradient(135deg, hsl(var(--neon-cyan)), hsl(var(--pixel-blue)));
-    --gradient-bg: linear-gradient(180deg, hsl(var(--background)), hsl(240 8% 4%));
-    --gradient-card: linear-gradient(135deg, hsl(var(--card)), hsl(240 8% 16%));
+    --gradient-bg: radial-gradient(ellipse at top, hsl(220 27% 12%), hsl(220 27% 6%));
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)), hsl(220 27% 18%));
+    --gradient-cosmic: conic-gradient(from 0deg, hsl(var(--neon-purple)), hsl(var(--neon-cyan)), hsl(var(--neon-pink)), hsl(var(--neon-purple)));
 
-    /* Shadows */
-    --shadow-neon: 0 0 20px hsl(var(--neon-purple) / 0.5);
-    --shadow-cyber: 0 10px 30px -10px hsl(var(--neon-cyan) / 0.3);
-    --shadow-glow: 0 0 40px hsl(var(--neon-pink) / 0.4);
+    /* Enhanced shadows */
+    --shadow-neon: 0 0 40px hsl(var(--neon-purple) / 0.8);
+    --shadow-cyber: 0 20px 60px -15px hsl(var(--neon-cyan) / 0.6);
+    --shadow-glow: 0 0 80px hsl(var(--neon-pink) / 0.6);
+    --shadow-cosmic: 0 0 100px hsl(var(--electric-yellow) / 0.3);
 
     /* Animations */
     --transition-cyber: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -127,6 +131,7 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     background: var(--gradient-bg);
     font-family: 'Inter', 'Courier New', monospace;
+    font-weight: 600;
   }
 }
 
