@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Cpu, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import blockfeedLogo from "@/assets/blockfeed-logo.png";
 
 const Header = () => {
   return (
@@ -8,12 +9,17 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="pixel-border bg-gradient-primary p-2 rounded-sm">
-              <Cpu className="h-6 w-6 text-primary-foreground" />
+            <div className="pixel-border bg-gradient-primary p-2 rounded-sm w-12 h-12 flex items-center justify-center">
+              <img 
+                src={blockfeedLogo} 
+                alt="BlockFeed Logo" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
             </div>
             <div className="font-bold font-mono">
-              <span className="gradient-text text-xl tracking-wide">NEURAL</span>
-              <span className="text-neon-cyan text-xl">NEWS</span>
+              <span className="gradient-text text-xl tracking-wide">BLOCK</span>
+              <span className="text-neon-cyan text-xl">FEED</span>
             </div>
           </div>
 

@@ -1,4 +1,5 @@
-import { Cpu, Github, Twitter, MessageCircle } from "lucide-react";
+import { Github, Twitter, MessageCircle } from "lucide-react";
+import blockfeedLogo from "@/assets/blockfeed-logo.png";
 
 const Footer = () => {
   return (
@@ -8,16 +9,21 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="pixel-border bg-gradient-primary p-2 rounded-sm">
-                <Cpu className="h-6 w-6 text-primary-foreground" />
+              <div className="pixel-border bg-gradient-primary p-2 rounded-sm w-12 h-12 flex items-center justify-center">
+                <img 
+                  src={blockfeedLogo} 
+                  alt="BlockFeed Logo" 
+                  className="w-8 h-8"
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </div>
               <div className="font-bold font-mono">
-                <span className="gradient-text text-xl tracking-wide">NEURAL</span>
-                <span className="text-neon-cyan text-xl">NEWS</span>
+                <span className="gradient-text text-xl tracking-wide">BLOCK</span>
+                <span className="text-neon-cyan text-xl">FEED</span>
               </div>
             </div>
             <p className="text-muted-foreground font-mono text-sm leading-relaxed">
-              The future of personalized AI news, delivered with retro style and cutting-edge technology.
+              The future of personalized AI news, delivered with retro style and cutting-edge blockchain technology.
             </p>
           </div>
 
@@ -58,7 +64,7 @@ const Footer = () => {
         {/* Bottom section */}
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm font-mono">
-            © 2024 NeuralNews. All rights reserved. Built with 💜 for the future.
+            © 2024 BlockFeed. All rights reserved. Built with 💜 for the future.
           </p>
           
           {/* Social links */}
