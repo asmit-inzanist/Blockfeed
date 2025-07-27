@@ -9,38 +9,38 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Ultra dark cosmic theme - inspired by Web3/Status designs */
-    --background: 220 27% 8%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 220 27% 10%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 220 27% 10%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 280 100% 70%;
-    --primary-foreground: 220 27% 8%;
+    --primary: 158 100% 50%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 180 100% 50%;
-    --secondary-foreground: 220 27% 8%;
+    --secondary: 280 100% 70%;
+    --secondary-foreground: 0 0% 4%;
 
-    --muted: 220 27% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 320 100% 75%;
-    --accent-foreground: 220 27% 8%;
+    --accent: 158 100% 50%;
+    --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 27% 20%;
-    --input: 220 27% 20%;
-    --ring: 280 100% 70%;
+    --border: 0 0% 15%;
+    --input: 0 0% 8%;
+    --ring: 158 100% 50%;
 
-    --radius: 0.25rem;
+    --radius: 0.5rem;
 
     /* Vibrant Web3 colors - Status/BAYC inspired */
-    --neon-cyan: 180 100% 50%;
+    --neon-cyan: 158 100% 50%;
     --neon-purple: 280 100% 70%;
     --neon-pink: 320 100% 75%;
     --neon-green: 120 100% 50%;
@@ -50,17 +50,17 @@ All colors MUST be HSL.
     --cosmic-red: 0 100% 60%;
 
     /* Enhanced gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--neon-purple)), hsl(var(--neon-pink)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--neon-cyan)), hsl(var(--pixel-blue)));
-    --gradient-bg: radial-gradient(ellipse at top, hsl(220 27% 12%), hsl(220 27% 6%));
-    --gradient-card: linear-gradient(135deg, hsl(var(--card)), hsl(220 27% 18%));
-    --gradient-cosmic: conic-gradient(from 0deg, hsl(var(--neon-purple)), hsl(var(--neon-cyan)), hsl(var(--neon-pink)), hsl(var(--neon-purple)));
+    --gradient-primary: linear-gradient(135deg, hsl(158 100% 50%), hsl(280 100% 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(280 100% 70%), hsl(320 100% 75%));
+    --gradient-bg: radial-gradient(ellipse at center, hsl(0 0% 8%), hsl(0 0% 2%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
+    --gradient-cosmic: conic-gradient(from 0deg, hsl(158 100% 50%), hsl(280 100% 70%), hsl(320 100% 75%), hsl(158 100% 50%));
 
     /* Enhanced shadows */
-    --shadow-neon: 0 0 40px hsl(var(--neon-purple) / 0.8);
-    --shadow-cyber: 0 20px 60px -15px hsl(var(--neon-cyan) / 0.6);
-    --shadow-glow: 0 0 80px hsl(var(--neon-pink) / 0.6);
-    --shadow-cosmic: 0 0 100px hsl(var(--electric-yellow) / 0.3);
+    --shadow-neon: 0 0 30px hsl(158 100% 50% / 0.8), 0 0 60px hsl(158 100% 50% / 0.4);
+    --shadow-cyber: 0 20px 60px -15px hsl(280 100% 70% / 0.6);
+    --shadow-glow: 0 0 80px hsl(320 100% 75% / 0.6);
+    --shadow-cosmic: 0 0 100px hsl(60 100% 50% / 0.3);
 
     /* Animations */
     --transition-cyber: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
