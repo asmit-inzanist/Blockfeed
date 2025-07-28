@@ -9,20 +9,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 pixel-button",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 pixel-button",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground pixel-button",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 pixel-button",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Web3/Retro variants
-        cyber: "bg-gradient-primary text-primary-foreground hover:shadow-neon pixel-button glow-pulse font-bold uppercase tracking-wide",
-        neon: "bg-gradient-secondary text-secondary-foreground hover:shadow-cyber pixel-button font-bold uppercase tracking-wide",
-        pixel: "bg-card text-card-foreground border-2 border-neon-cyan hover:bg-neon-cyan hover:text-background pixel-button font-mono font-bold",
-        retro: "bg-retro-orange text-background hover:bg-retro-orange/80 pixel-button font-bold uppercase tracking-widest",
+        // Clean modern variants
+        cyber: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl",
+        neon: "bg-gradient-secondary text-secondary-foreground hover:opacity-90",
+        pixel: "bg-card text-card-foreground border border-border hover:bg-secondary",
+        retro: "bg-accent text-accent-foreground hover:bg-accent/80",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-sm",

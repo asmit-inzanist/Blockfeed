@@ -8,40 +8,40 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Ultra dark cosmic theme - inspired by Web3/Status designs */
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
+    /* Clean dark theme inspired by modern Web3 designs */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 158 100% 50%;
-    --primary-foreground: 0 0% 4%;
+    --primary: 262 90% 65%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 280 100% 70%;
-    --secondary-foreground: 0 0% 4%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 158 100% 50%;
-    --accent-foreground: 0 0% 4%;
+    --accent: 262 90% 65%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 8%;
-    --ring: 158 100% 50%;
+    --border: 0 0% 20%;
+    --input: 0 0% 16%;
+    --ring: 262 90% 65%;
 
     --radius: 0.5rem;
 
-    /* Vibrant Web3 colors - Status/BAYC inspired */
-    --neon-cyan: 158 100% 50%;
-    --neon-purple: 280 100% 70%;
+    /* Clean accent colors */
+    --neon-cyan: 180 100% 70%;
+    --neon-purple: 262 90% 65%;
     --neon-pink: 320 100% 75%;
     --neon-green: 120 100% 50%;
     --retro-orange: 30 100% 60%;
@@ -49,18 +49,18 @@ All colors MUST be HSL.
     --electric-yellow: 60 100% 50%;
     --cosmic-red: 0 100% 60%;
 
-    /* Enhanced gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(158 100% 50%), hsl(280 100% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(280 100% 70%), hsl(320 100% 75%));
-    --gradient-bg: radial-gradient(ellipse at center, hsl(0 0% 8%), hsl(0 0% 2%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
-    --gradient-cosmic: conic-gradient(from 0deg, hsl(158 100% 50%), hsl(280 100% 70%), hsl(320 100% 75%), hsl(158 100% 50%));
+    /* Subtle gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 90% 65%), hsl(280 100% 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 16%), hsl(0 0% 20%));
+    --gradient-bg: radial-gradient(ellipse at center, hsl(0 0% 10%), hsl(0 0% 6%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 12%), hsl(0 0% 16%));
+    --gradient-cosmic: linear-gradient(135deg, hsl(262 90% 65%), hsl(280 100% 70%));
 
-    /* Enhanced shadows */
-    --shadow-neon: 0 0 30px hsl(158 100% 50% / 0.8), 0 0 60px hsl(158 100% 50% / 0.4);
-    --shadow-cyber: 0 20px 60px -15px hsl(280 100% 70% / 0.6);
-    --shadow-glow: 0 0 80px hsl(320 100% 75% / 0.6);
-    --shadow-cosmic: 0 0 100px hsl(60 100% 50% / 0.3);
+    /* Subtle shadows */
+    --shadow-neon: 0 4px 20px hsl(262 90% 65% / 0.3);
+    --shadow-cyber: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(262 90% 65% / 0.2);
+    --shadow-cosmic: 0 0 60px hsl(262 90% 65% / 0.1);
 
     /* Animations */
     --transition-cyber: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -130,8 +130,8 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     background: var(--gradient-bg);
-    font-family: 'Inter', 'Courier New', monospace;
-    font-weight: 600;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
   }
 }
 
