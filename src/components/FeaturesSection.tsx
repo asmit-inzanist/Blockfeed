@@ -42,17 +42,13 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="py-20 relative">
-      {/* Background grid */}
-      <div className="absolute inset-0 retro-grid opacity-10" />
-      
-      <div className="container mx-auto px-4 relative z-10">
+    <section className="py-20">
+      <div className="container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            <span className="gradient-text">Features</span>{" "}
-            <span className="text-foreground">Built for</span>{" "}
-            <span className="text-neon-cyan">Tomorrow</span>
+          <h2 className="text-4xl lg:text-6xl font-bold mb-6 font-mono uppercase tracking-wider">
+            <span className="text-foreground">Features Built for</span><br />
+            <span className="text-foreground">Tomorrow</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-mono">
             Discover the cutting-edge features that make our AI news platform 
@@ -63,21 +59,17 @@ const FeaturesSection = () => {
         {/* Features grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className="pixel-border bg-gradient-card hover:shadow-cyber transition-all duration-300 group">
-              <CardHeader>
-                <div className={`inline-flex items-center justify-center w-12 h-12 pixel-border bg-background rounded-sm mb-4 group-hover:scale-110 transition-transform ${feature.color}`}>
-                  <feature.icon className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-xl font-bold font-mono uppercase tracking-wide">
-                  {feature.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
+            <div key={index} className="border border-border bg-card p-8 hover:bg-secondary transition-colors">
+              <div className="mb-6">
+                <feature.icon className="h-8 w-8 text-foreground" />
+              </div>
+              <h3 className="text-xl font-bold font-mono uppercase tracking-wide mb-4">
+                {feature.title}
+              </h3>
+              <p className="text-muted-foreground leading-relaxed font-mono">
+                {feature.description}
+              </p>
+            </div>
           ))}
         </div>
       </div>
