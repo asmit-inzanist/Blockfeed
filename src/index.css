@@ -8,59 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Clean minimal theme inspired by uploaded designs */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* Clean cream theme inspired by uploaded designs */
+    --background: 48 20% 92%;
+    --foreground: 0 0% 0%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 48 20% 88%;
+    --card-foreground: 0 0% 0%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 48 20% 88%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 48 20% 92%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 48 20% 85%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 48 20% 80%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 48 20% 85%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 48 20% 92%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 10%;
-    --ring: 0 0% 30%;
+    --border: 0 0% 60%;
+    --input: 48 20% 85%;
+    --ring: 0 0% 40%;
 
     --radius: 0rem;
 
     /* Minimal accent colors */
-    --neon-cyan: 0 0% 100%;
-    --neon-purple: 0 0% 100%;
-    --neon-pink: 0 0% 100%;
-    --neon-green: 0 0% 100%;
-    --retro-orange: 0 0% 100%;
-    --pixel-blue: 0 0% 100%;
-    --electric-yellow: 0 0% 100%;
-    --cosmic-red: 0 0% 100%;
+    --neon-cyan: 0 0% 0%;
+    --neon-purple: 0 0% 0%;
+    --neon-pink: 0 0% 0%;
+    --neon-green: 0 0% 0%;
+    --retro-orange: 0 0% 0%;
+    --pixel-blue: 0 0% 0%;
+    --electric-yellow: 0 0% 0%;
+    --cosmic-red: 0 0% 0%;
 
     /* Clean gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 90%));
-    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 15%));
-    --gradient-bg: hsl(0 0% 0%);
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 8%));
-    --gradient-cosmic: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 90%));
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 20%));
+    --gradient-secondary: linear-gradient(135deg, hsl(48 20% 85%), hsl(48 20% 80%));
+    --gradient-bg: hsl(48 20% 92%);
+    --gradient-card: linear-gradient(135deg, hsl(48 20% 88%), hsl(48 20% 85%));
+    --gradient-cosmic: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 20%));
 
     /* Clean shadows */
-    --shadow-neon: 0 4px 20px hsl(0 0% 0% / 0.2);
-    --shadow-cyber: 0 8px 32px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 40px hsl(0 0% 0% / 0.1);
-    --shadow-cosmic: 0 0 60px hsl(0 0% 0% / 0.1);
+    --shadow-neon: 0 4px 20px hsl(0 0% 0% / 0.1);
+    --shadow-cyber: 0 8px 32px hsl(0 0% 0% / 0.15);
+    --shadow-glow: 0 0 40px hsl(0 0% 0% / 0.05);
+    --shadow-cosmic: 0 0 60px hsl(0 0% 0% / 0.05);
 
     /* Animations */
     --transition-cyber: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
