@@ -4,14 +4,44 @@ import { Sparkles, Brain } from "lucide-react";
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Geometric background elements */}
+      {/* Geometric wireframe elements */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-20 w-32 h-32 border border-foreground/10 rotate-45"></div>
-        <div className="absolute top-40 right-32 w-24 h-24 rounded-full border border-foreground/10"></div>
-        <div className="absolute bottom-32 left-32 w-20 h-20 border border-foreground/10 rotate-12"></div>
-        <div className="absolute bottom-20 right-20 w-16 h-32 border border-foreground/10 rotate-45"></div>
-        <div className="absolute top-1/2 left-10 w-6 h-6 bg-foreground/5 rotate-45"></div>
-        <div className="absolute top-1/3 right-10 w-8 h-8 rounded-full bg-foreground/5"></div>
+        {/* Large geometric fox/wolf wireframe - top left */}
+        <div className="absolute top-10 left-10 w-64 h-64 opacity-10">
+          <svg viewBox="0 0 200 200" className="w-full h-full stroke-current text-foreground" fill="none" strokeWidth="1">
+            {/* Geometric fox head outline */}
+            <polygon points="100,20 140,60 140,100 120,120 100,110 80,120 60,100 60,60" />
+            <polygon points="70,70 90,90 110,90 130,70" />
+            <polygon points="85,95 100,105 115,95" />
+            <line x1="100" y1="20" x2="100" y2="40" />
+            <line x1="80" y1="40" x2="120" y2="40" />
+            <line x1="75" y1="85" x2="85" y2="75" />
+            <line x1="125" y1="85" x2="115" y2="75" />
+          </svg>
+        </div>
+        
+        {/* Small geometric elements */}
+        <div className="absolute top-32 right-20 w-16 h-16 opacity-10">
+          <svg viewBox="0 0 50 50" className="w-full h-full stroke-current text-foreground" fill="none" strokeWidth="1">
+            <circle cx="25" cy="25" r="20" />
+            <circle cx="25" cy="25" r="10" />
+            <circle cx="25" cy="25" r="5" />
+          </svg>
+        </div>
+        
+        {/* Bottom right geometric pattern */}
+        <div className="absolute bottom-20 right-32 w-32 h-32 opacity-10">
+          <svg viewBox="0 0 100 100" className="w-full h-full stroke-current text-foreground" fill="none" strokeWidth="1">
+            <polygon points="50,10 80,40 50,70 20,40" />
+            <polygon points="50,25 65,40 50,55 35,40" />
+            <line x1="50" y1="10" x2="50" y2="70" />
+            <line x1="20" y1="40" x2="80" y2="40" />
+          </svg>
+        </div>
+        
+        {/* Small accent shapes */}
+        <div className="absolute bottom-40 left-20 w-8 h-8 border border-foreground/10 rotate-45"></div>
+        <div className="absolute top-1/2 right-10 w-6 h-12 border border-foreground/10"></div>
       </div>
       
       <div className="container mx-auto px-4 py-20 relative z-10">
