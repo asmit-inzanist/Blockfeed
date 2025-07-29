@@ -3,6 +3,7 @@ import { Clock, Heart, Bookmark, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import InterestsSelector from '@/components/InterestsSelector';
 
 interface Article {
   title: string;
@@ -28,7 +29,7 @@ const TodaysFeeds = () => {
       setLoading(true);
       
       const { data, error } = await supabase.functions.invoke('fetch-rss-feeds', {
-        body: { categories: ['Technology', 'Sports', 'Finance'] }
+        body: { categories: userInterests }
       });
 
       if (error) throw error;
@@ -61,6 +62,31 @@ const TodaysFeeds = () => {
     }
   };
 
+  const handleInterestsChange = async (newInterests: string[]) => {
+    setUserInterests(newInterests);
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Save preferences to database
+        await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: user.id,
+            interests: newInterests.filter(i => ['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'].includes(i)),
+            custom_interests: newInterests.filter(i => !['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'].includes(i))
+          });
+      }
+      
+      // Refetch articles with new interests
+      fetchFeedsData();
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+    }
+  };
+
   const formatTimeAgo = (publishedAt?: string) => {
     if (!publishedAt) return 'now';
     
@@ -74,10 +100,6 @@ const TodaysFeeds = () => {
     return `${diffHours} hours ago`;
   };
 
-  const handleEditInterests = () => {
-    // Placeholder for edit interests functionality
-    console.log('Edit interests clicked');
-  };
 
   const handleReadMore = (link: string) => {
     if (link !== '#') {
@@ -144,15 +166,10 @@ const TodaysFeeds = () => {
         <div className="bg-card border rounded-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-card-foreground">Your Interests</h2>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleEditInterests}
-              className="text-sm"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Edit Interests
-            </Button>
+            <InterestsSelector 
+              interests={userInterests}
+              onInterestsChange={handleInterestsChange}
+            />
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Your personalized feed is curated based on these interests:

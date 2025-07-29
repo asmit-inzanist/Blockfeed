@@ -12,7 +12,7 @@ const RSS_FEEDS = {
   'Guardian World': 'https://www.theguardian.com/world/rss',
   'Guardian Tech': 'https://www.theguardian.com/uk/technology/rss',
   'TechCrunch': 'https://techcrunch.com/feed/',
-  'Reuters Tech': 'https://feeds.reuters.com/reuters/technologyNews'
+  'Reuters Tech': 'http://feeds.reuters.com/reuters/technologyNews'
 }
 
 interface Article {
@@ -68,12 +68,17 @@ function getCategoryFromSource(source: string): string {
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
   
+  console.log('Gemini API key present:', !!geminiApiKey)
+  console.log('User interests:', interests)
+  console.log('Articles to process:', articles.length)
+  
   if (!geminiApiKey) {
     console.log('No Gemini API key found, returning unpersonalized articles')
     return articles.map(article => ({ ...article }))
   }
 
   try {
+    console.log('Making Gemini API request...')
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
@@ -98,7 +103,9 @@ async function personalizeWithGemini(articles: Article[], interests: string[]): 
       })
     })
 
+    console.log('Gemini API response status:', response.status)
     const data = await response.json()
+    console.log('Gemini API response data:', JSON.stringify(data, null, 2))
     const geminiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (geminiResponse) {
