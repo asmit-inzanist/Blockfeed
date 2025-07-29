@@ -1,7 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, Brain } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleStartJourney = () => {
+    navigate('/todays-feeds');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Geometric wireframe elements */}
@@ -61,7 +68,12 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="default" size="xl" className="font-mono uppercase tracking-wider">
+            <Button 
+              variant="default" 
+              size="xl" 
+              className="font-mono uppercase tracking-wider"
+              onClick={handleStartJourney}
+            >
               <Sparkles className="h-5 w-5" />
               Start Your Journey
             </Button>

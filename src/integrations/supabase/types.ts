@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      curated_articles: {
+        Row: {
+          ai_score: number | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          link: string
+          published_at: string | null
+          source: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          ai_score?: number | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          link: string
+          published_at?: string | null
+          source: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          ai_score?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          link?: string
+          published_at?: string | null
+          source?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          custom_interests: string[] | null
+          id: string
+          interests: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_interests?: string[] | null
+          id?: string
+          interests?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_interests?: string[] | null
+          id?: string
+          interests?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
