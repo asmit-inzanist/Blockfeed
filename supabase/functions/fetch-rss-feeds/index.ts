@@ -189,8 +189,24 @@ serve(async (req) => {
       }
     }
 
+    // Filter articles by user interests first
+    const filteredArticles = allArticles.filter(article => {
+      if (userInterests.includes('General')) return true;
+      
+      return userInterests.some(interest => 
+        article.category.toLowerCase().includes(interest.toLowerCase()) ||
+        article.title.toLowerCase().includes(interest.toLowerCase()) ||
+        article.description.toLowerCase().includes(interest.toLowerCase())
+      );
+    });
+
+    console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
+
     // Personalize with Gemini
-    const personalizedArticles = await personalizeWithGemini(allArticles, userInterests)
+    const personalizedArticles = await personalizeWithGemini(
+      filteredArticles.length > 0 ? filteredArticles : allArticles, 
+      userInterests
+    )
 
     // Store curated articles for the user if authenticated
     if (user) {

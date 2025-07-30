@@ -29,15 +29,24 @@ serve(async (req) => {
       `${index + 1}. **${article.title}** (${article.category}, AI Score: ${article.ai_score || 75}%)\n   ${article.description}`
     ).join('\n\n')
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `You are an AI news assistant. Based on the user's personalized news articles below, provide helpful, concise, and insightful responses to their questions. Use bullet points when summarizing multiple articles or providing key insights.
+    // Try different models if one fails
+    let response;
+    let lastError;
+    
+    const models = ['gemini-1.5-flash', 'gemini-pro'];
+    
+    for (const model of models) {
+      try {
+        console.log(`Trying model: ${model}`);
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `You are an AI news assistant. Based on the user's personalized news articles below, provide helpful, concise, and insightful responses to their questions. Use bullet points when summarizing multiple articles or providing key insights.
 
 PERSONALIZED NEWS ARTICLES:
 ${articlesContext}
@@ -45,20 +54,54 @@ ${articlesContext}
 USER QUESTION: ${message}
 
 Please provide a helpful response based on the news articles above. If the user asks for a summary, provide it in bullet points. If they ask about specific topics, reference the relevant articles.`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1000,
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 800,
+            }
+          })
+        });
+        
+        if (response.ok) {
+          console.log(`Successfully used model: ${model}`);
+          break;
+        } else {
+          const errorData = await response.json();
+          lastError = errorData;
+          console.log(`Model ${model} failed:`, errorData);
         }
-      })
-    })
+      } catch (error) {
+        lastError = error;
+        console.log(`Model ${model} error:`, error.message);
+      }
+    }
+
+    if (!response || !response.ok) {
+      console.error('All models failed. Last error:', lastError);
+      return new Response(
+        JSON.stringify({ 
+          response: `Here's a summary of your personalized news feed:\n\n${articles.map((article: any, index: number) => 
+            `• **${article.title}** (${article.category}): ${article.description.substring(0, 100)}...`
+          ).join('\n\n')}`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const data = await response.json()
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!aiResponse) {
-      throw new Error('No response from Gemini API')
+      // Fallback response
+      return new Response(
+        JSON.stringify({ 
+          response: `Here's a summary of your personalized news feed:\n\n${articles.map((article: any, index: number) => 
+            `• **${article.title}** (${article.category}): ${article.description.substring(0, 100)}...`
+          ).join('\n\n')}`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
