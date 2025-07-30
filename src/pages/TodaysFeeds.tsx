@@ -3,7 +3,9 @@ import { Clock, Heart, Bookmark, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import InterestsSelector from '@/components/InterestsSelector';
+import ChatBot from '@/components/ChatBot';
 
 interface Article {
   title: string;
@@ -19,6 +21,9 @@ const TodaysFeeds = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [userInterests, setUserInterests] = useState<string[]>(['Technology', 'AI']);
   const [loading, setLoading] = useState(true);
+  const [likedArticles, setLikedArticles] = useState<Set<string>>(new Set());
+  const [savedArticles, setSavedArticles] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchFeedsData();
@@ -63,6 +68,7 @@ const TodaysFeeds = () => {
   };
 
   const handleInterestsChange = async (newInterests: string[]) => {
+    console.log('Updating interests to:', newInterests);
     setUserInterests(newInterests);
     
     try {
@@ -71,17 +77,23 @@ const TodaysFeeds = () => {
       
       if (user) {
         // Save preferences to database
-        await supabase
+        const { error } = await supabase
           .from('user_preferences')
           .upsert({
             user_id: user.id,
             interests: newInterests.filter(i => ['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'].includes(i)),
             custom_interests: newInterests.filter(i => !['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'].includes(i))
           });
+          
+        if (error) {
+          console.error('Error saving preferences:', error);
+        } else {
+          console.log('Preferences saved successfully');
+        }
       }
       
       // Refetch articles with new interests
-      fetchFeedsData();
+      await fetchFeedsData();
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
@@ -105,6 +117,39 @@ const TodaysFeeds = () => {
     if (link !== '#') {
       window.open(link, '_blank');
     }
+  };
+
+  const handleLike = (articleLink: string) => {
+    setLikedArticles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(articleLink)) {
+        newSet.delete(articleLink);
+        toast({ description: "Removed from liked articles" });
+      } else {
+        newSet.add(articleLink);
+        toast({ description: "Article liked!" });
+      }
+      return newSet;
+    });
+  };
+
+  const handleSave = (articleLink: string) => {
+    setSavedArticles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(articleLink)) {
+        newSet.delete(articleLink);
+        toast({ description: "Removed from saved articles" });
+      } else {
+        newSet.add(articleLink);
+        toast({ description: "Article saved!" });
+      }
+      return newSet;
+    });
+  };
+
+  const handleDismiss = (articleLink: string) => {
+    setArticles(prev => prev.filter(article => article.link !== articleLink));
+    toast({ description: "Article dismissed" });
   };
 
   if (loading) {
@@ -212,13 +257,28 @@ const TodaysFeeds = () => {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Button variant="ghost" size="sm" className="p-2">
-                    <Heart className="w-4 h-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-2"
+                    onClick={() => handleLike(article.link)}
+                  >
+                    <Heart className={`w-4 h-4 ${likedArticles.has(article.link) ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="p-2">
-                    <Bookmark className="w-4 h-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-2"
+                    onClick={() => handleSave(article.link)}
+                  >
+                    <Bookmark className={`w-4 h-4 ${savedArticles.has(article.link) ? 'fill-yellow-500 text-yellow-500' : ''}`} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="p-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-2"
+                    onClick={() => handleDismiss(article.link)}
+                  >
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
@@ -234,6 +294,9 @@ const TodaysFeeds = () => {
           ))}
         </div>
       </main>
+      
+      {/* ChatBot */}
+      <ChatBot articles={articles} />
     </div>
   );
 };
