@@ -89,11 +89,11 @@ async function personalizeWithGemini(articles: Article[], interests: string[]): 
           parts: [{
             text: `Based on user interests: ${interests.join(', ')}
             
-            Analyze these news articles and score each from 1-100 based on relevance to the user's interests. Return only a JSON array with title and score for each article:
+            Analyze these news articles and score each from 1-100 based on relevance to the user's interests. Pay special attention to the article titles and descriptions. Higher scores (80-100) for highly relevant content, medium scores (40-79) for somewhat relevant content, and lower scores (1-39) for irrelevant content. Return only a JSON array with title and score for each article:
 
-            ${articles.map((article, index) => `${index + 1}. Title: ${article.title}\nDescription: ${article.description}`).join('\n\n')}
+            ${articles.map((article, index) => `${index + 1}. Title: "${article.title}"\nDescription: "${article.description}"\nSource: ${article.source}\nCategory: ${article.category}`).join('\n\n')}
 
-            Return format: [{"title": "article title", "score": 85}, ...]`
+            Return format: [{"title": "exact article title", "score": 85}, ...]`
           }]
         }],
         generationConfig: {

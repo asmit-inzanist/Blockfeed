@@ -26,21 +26,49 @@ const TodaysFeeds = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchFeedsData();
+    loadUserPreferences();
   }, []);
 
-  const fetchFeedsData = async () => {
+  const loadUserPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let currentInterests = ['Technology', 'AI']; // default
+      
+      if (user) {
+        const { data: preferences } = await supabase
+          .from('user_preferences')
+          .select('interests, custom_interests')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (preferences) {
+          const allInterests = [...(preferences.interests || []), ...(preferences.custom_interests || [])];
+          if (allInterests.length > 0) {
+            currentInterests = allInterests;
+            setUserInterests(allInterests);
+          }
+        }
+      }
+      
+      await fetchFeedsData(currentInterests);
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+      await fetchFeedsData(['Technology', 'AI']);
+    }
+  };
+
+  const fetchFeedsData = async (interests?: string[]) => {
     try {
       setLoading(true);
+      const categoriesToUse = interests || userInterests;
       
       const { data, error } = await supabase.functions.invoke('fetch-rss-feeds', {
-        body: { categories: userInterests }
+        body: { categories: categoriesToUse }
       });
 
       if (error) throw error;
 
       setArticles(data.articles || []);
-      setUserInterests(data.interests || ['Technology', 'AI']);
     } catch (error) {
       console.error('Error fetching feeds:', error);
       // Fallback mock data matching the design
