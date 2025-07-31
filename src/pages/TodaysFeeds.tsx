@@ -239,10 +239,20 @@ const TodaysFeeds = () => {
         <div className="bg-card border rounded-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-card-foreground">Your Interests</h2>
-            <InterestsSelector 
-              interests={userInterests}
-              onInterestsChange={handleInterestsChange}
-            />
+            <div className="flex items-center gap-2">
+              <InterestsSelector 
+                interests={userInterests}
+                onInterestsChange={handleInterestsChange}
+              />
+              <Button 
+                onClick={() => fetchFeedsData(userInterests)} 
+                variant="outline" 
+                size="sm"
+                disabled={loading}
+              >
+                {loading ? 'Updating...' : 'Update Feed'}
+              </Button>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Your personalized feed is curated based on these interests:
