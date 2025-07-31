@@ -39,7 +39,7 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
   const itemMatches = xmlText.match(/<item[^>]*>[\s\S]*?<\/item>/gi)
   
   if (itemMatches) {
-    for (const item of itemMatches.slice(0, 5)) { // Limit to 5 articles per feed
+    for (const item of itemMatches.slice(0, 8)) { // Limit to 8 articles per feed
       const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
       const descriptionMatch = item.match(/<description[^>]*>([\s\S]*?)<\/description>/i)
       const linkMatch = item.match(/<link[^>]*>([\s\S]*?)<\/link>/i)
@@ -256,7 +256,7 @@ serve(async (req) => {
 
     // Store curated articles for the user if authenticated
     if (user) {
-      const articlesToStore = personalizedArticles.slice(0, 10).map(article => ({
+      const articlesToStore = personalizedArticles.slice(0, 25).map(article => ({
         user_id: user.id,
         title: article.title,
         description: article.description,
@@ -274,7 +274,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        articles: personalizedArticles.slice(0, 10),
+        articles: personalizedArticles.slice(0, 25),
         interests: userInterests
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

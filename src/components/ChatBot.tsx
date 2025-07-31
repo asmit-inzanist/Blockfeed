@@ -83,6 +83,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ articles }) => {
     }
   };
 
+  const handleSummarizeFeed = () => {
+    setInputValue('Summarize my feed');
+    handleSendMessage();
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -160,6 +165,19 @@ const ChatBot: React.FC<ChatBotProps> = ({ articles }) => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Pre-written prompts */}
+            <div className="px-4 pb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSummarizeFeed}
+                disabled={isLoading}
+                className="w-full text-xs"
+              >
+                Summarize my feed
+              </Button>
             </div>
 
             {/* Input */}

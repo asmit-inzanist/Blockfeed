@@ -29,6 +29,9 @@ serve(async (req) => {
       `${index + 1}. **${article.title}** (${article.category}, AI Score: ${article.ai_score || 75}%)\n   ${article.description}`
     ).join('\n\n')
 
+    // Check if this is a summarize request
+    const isSummarizeRequest = message.toLowerCase().includes('summarize my feed') || message.toLowerCase().includes('summarize the feed')
+
     // Try different models if one fails
     let response;
     let lastError;
@@ -46,7 +49,14 @@ serve(async (req) => {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `You are an AI news assistant. Based on the user's personalized news articles below, provide helpful, concise, and insightful responses to their questions. Use bullet points when summarizing multiple articles or providing key insights.
+                text: isSummarizeRequest ? 
+                  `You are an AI news assistant. Based on the user's personalized news articles below, create a numbered summary of the key news points. Format your response as a numbered list (1., 2., 3., etc.) with each point being a concise summary of the most important or interesting news from their feed.
+
+PERSONALIZED NEWS ARTICLES:
+${articlesContext}
+
+Please provide a numbered summary (1., 2., 3., etc.) of the most important news points from these articles. Each point should be one clear, concise sentence summarizing a key news story.` :
+                  `You are an AI news assistant. Based on the user's personalized news articles below, provide helpful, concise, and insightful responses to their questions. Use bullet points when summarizing multiple articles or providing key insights.
 
 PERSONALIZED NEWS ARTICLES:
 ${articlesContext}
