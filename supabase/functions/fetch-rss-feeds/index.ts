@@ -9,10 +9,18 @@ const corsHeaders = {
 const RSS_FEEDS = {
   'BBC News': 'http://feeds.bbci.co.uk/news/rss.xml',
   'BBC Tech': 'http://feeds.bbci.co.uk/news/technology/rss.xml',
+  'BBC Business': 'http://feeds.bbci.co.uk/news/business/rss.xml',
+  'BBC Health': 'http://feeds.bbci.co.uk/news/health/rss.xml',
+  'BBC Entertainment': 'http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml',
   'Guardian World': 'https://www.theguardian.com/world/rss',
   'Guardian Tech': 'https://www.theguardian.com/uk/technology/rss',
+  'Guardian Business': 'https://www.theguardian.com/uk/business/rss',
+  'Guardian Sport': 'https://www.theguardian.com/uk/sport/rss',
+  'Guardian Science': 'https://www.theguardian.com/science/rss',
   'TechCrunch': 'https://techcrunch.com/feed/',
-  'Reuters Tech': 'http://feeds.reuters.com/reuters/technologyNews'
+  'Reuters Tech': 'http://feeds.reuters.com/reuters/technologyNews',
+  'Reuters Business': 'http://feeds.reuters.com/reuters/businessNews',
+  'Reuters Health': 'http://feeds.reuters.com/reuters/healthNews'
 }
 
 interface Article {
@@ -60,9 +68,47 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 }
 
 function getCategoryFromSource(source: string): string {
-  if (source.toLowerCase().includes('tech')) return 'Technology'
-  if (source.toLowerCase().includes('world')) return 'World'
+  const sourceLower = source.toLowerCase()
+  if (sourceLower.includes('tech')) return 'Technology'
+  if (sourceLower.includes('business')) return 'Finance'
+  if (sourceLower.includes('sport')) return 'Sports'
+  if (sourceLower.includes('health')) return 'Health'
+  if (sourceLower.includes('entertainment')) return 'Entertainment'
+  if (sourceLower.includes('science')) return 'Science'
+  if (sourceLower.includes('world')) return 'World News'
   return 'General'
+}
+
+function getKeywordsForCategory(category: string): string[] {
+  const keywordMap: Record<string, string[]> = {
+    'technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
+    'finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
+    'sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
+    'politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
+    'health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
+    'entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
+    'science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
+    'world': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis']
+  }
+  return keywordMap[category.toLowerCase()] || []
+}
+
+function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Article[] {
+  if (!userInterests || userInterests.length === 0) {
+    return newsItems
+  }
+  
+  return newsItems.filter(item => {
+    const title = item.title.toLowerCase()
+    const description = item.description.toLowerCase()
+    const content = title + " " + description
+    
+    return userInterests.some(interest => {
+      const keywords = getKeywordsForCategory(interest)
+      return keywords.some(keyword => content.includes(keyword.toLowerCase())) ||
+             item.category.toLowerCase().includes(interest.toLowerCase())
+    })
+  })
 }
 
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
@@ -189,18 +235,18 @@ serve(async (req) => {
       }
     }
 
-    // Filter articles by user interests first
-    const filteredArticles = allArticles.filter(article => {
-      if (userInterests.includes('General')) return true;
-      
-      return userInterests.some(interest => 
-        article.category.toLowerCase().includes(interest.toLowerCase()) ||
-        article.title.toLowerCase().includes(interest.toLowerCase()) ||
-        article.description.toLowerCase().includes(interest.toLowerCase())
-      );
-    });
+    // Use advanced filtering with keywords
+    const filteredArticles = filterNewsByInterests(allArticles, userInterests)
 
     console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
+    
+    // Debug information
+    console.log('Debug Info:', {
+      totalArticles: allArticles.length,
+      filteredArticles: filteredArticles.length,
+      userInterests,
+      sampleFilteredTitles: filteredArticles.slice(0, 3).map(a => a.title)
+    });
 
     // Personalize with Gemini
     const personalizedArticles = await personalizeWithGemini(

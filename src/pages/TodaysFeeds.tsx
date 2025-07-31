@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import InterestsSelector from '@/components/InterestsSelector';
 import ChatBot from '@/components/ChatBot';
+import DebugPanel from '@/components/DebugPanel';
 
 interface Article {
   title: string;
@@ -17,13 +18,66 @@ interface Article {
   publishedAt?: string;
 }
 
+function getKeywordsForCategory(category: string): string[] {
+  const keywordMap: Record<string, string[]> = {
+    'technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
+    'finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
+    'sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
+    'politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
+    'health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
+    'entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
+    'science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
+    'world news': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis']
+  };
+  return keywordMap[category.toLowerCase()] || [];
+}
+
+function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Article[] {
+  if (!userInterests || userInterests.length === 0) {
+    return newsItems;
+  }
+  
+  return newsItems.filter(item => {
+    const title = item.title.toLowerCase();
+    const description = item.description.toLowerCase();
+    const content = title + " " + description;
+    
+    return userInterests.some(interest => {
+      const keywords = getKeywordsForCategory(interest);
+      return keywords.some(keyword => content.includes(keyword.toLowerCase())) ||
+             item.category.toLowerCase().includes(interest.toLowerCase());
+    });
+  });
+}
+
 const TodaysFeeds = () => {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [userInterests, setUserInterests] = useState<string[]>(['Technology', 'AI']);
+  const [allNews, setAllNews] = useState<Article[]>([]);
+  const [filteredNews, setFilteredNews] = useState<Article[]>([]);
+  const [userInterests, setUserInterests] = useState<string[]>(['Technology']);
   const [loading, setLoading] = useState(true);
   const [likedArticles, setLikedArticles] = useState<Set<string>>(new Set());
   const [savedArticles, setSavedArticles] = useState<Set<string>>(new Set());
+  const [debugStats, setDebugStats] = useState({
+    totalArticles: 0,
+    filteredArticles: 0,
+    sampleTitles: [] as string[]
+  });
   const { toast } = useToast();
+
+  // Filter news by interests whenever allNews or userInterests change
+  useEffect(() => {
+    if (allNews.length > 0) {
+      const filtered = filterNewsByInterests(allNews, userInterests);
+      setFilteredNews(filtered);
+      setArticles(filtered);
+      setDebugStats({
+        totalArticles: allNews.length,
+        filteredArticles: filtered.length,
+        sampleTitles: filtered.slice(0, 3).map(a => a.title)
+      });
+    }
+  }, [allNews, userInterests]);
 
   useEffect(() => {
     loadUserPreferences();
@@ -68,7 +122,9 @@ const TodaysFeeds = () => {
 
       if (error) throw error;
 
-      setArticles(data.articles || []);
+      const fetchedArticles = data.articles || [];
+      setAllNews(fetchedArticles);
+      setArticles(fetchedArticles);
     } catch (error) {
       console.error('Error fetching feeds:', error);
       // Fallback mock data matching the design
@@ -105,12 +161,13 @@ const TodaysFeeds = () => {
       
       if (user) {
         // Save preferences to database
+        const predefinedInterests = ['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News'];
         const { error } = await supabase
           .from('user_preferences')
           .upsert({
             user_id: user.id,
-            interests: newInterests.filter(i => ['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'].includes(i)),
-            custom_interests: newInterests.filter(i => !['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'].includes(i))
+            interests: newInterests.filter(i => predefinedInterests.includes(i)),
+            custom_interests: newInterests.filter(i => !predefinedInterests.includes(i))
           });
           
         if (error) {
@@ -234,6 +291,15 @@ const TodaysFeeds = () => {
             AI-curated stories tailored to your interests • {articles.length} articles • Ready to read
           </p>
         </div>
+
+        {/* Debug Panel */}
+        <DebugPanel
+          totalArticles={debugStats.totalArticles}
+          filteredArticles={debugStats.filteredArticles}
+          userInterests={userInterests}
+          sampleTitles={debugStats.sampleTitles}
+          loading={loading}
+        />
 
         {/* Your Interests Section */}
         <div className="bg-card border rounded-lg p-6 mb-8">

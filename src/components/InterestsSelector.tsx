@@ -10,7 +10,7 @@ interface InterestsSelectorProps {
   onInterestsChange: (interests: string[]) => void;
 }
 
-const PREDEFINED_INTERESTS = ['Technology', 'Sports', 'Finance', 'AI', 'Blockchain', 'Web3', 'Privacy'];
+const PREDEFINED_INTERESTS = ['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News'];
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,6 +43,14 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
     setSelectedInterests(interests);
     setCustomInterest('');
     setIsOpen(false);
+  };
+
+  const handleSelectAll = () => {
+    setSelectedInterests([...PREDEFINED_INTERESTS]);
+  };
+
+  const handleClearAll = () => {
+    setSelectedInterests([]);
   };
 
   return (
@@ -83,7 +91,17 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
 
           {/* Predefined Interests */}
           <div>
-            <h4 className="text-sm font-medium mb-3">Popular Categories</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium">Popular Categories</h4>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs">
+                  Select All
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-xs">
+                  Clear All
+                </Button>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
               {PREDEFINED_INTERESTS.map((interest) => (
                 <Button
