@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import InterestsSelector from '@/components/InterestsSelector';
 import ChatBot from '@/components/ChatBot';
 import DebugPanel from '@/components/DebugPanel';
+import Header from '@/components/Header';
 
 interface Article {
   title: string;
@@ -240,19 +241,7 @@ const TodaysFeeds = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 items-center justify-between">
-            <div className="text-xl font-bold text-foreground">BLOCKFEED</div>
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">FEATURES</a>
-              <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">ABOUT</a>
-              <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">PRICING</a>
-              <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">CONTACT</a>
-              <Button variant="ghost" size="sm">SIGN IN</Button>
-              <Button size="sm">GET STARTED</Button>
-            </nav>
-          </div>
-        </header>
+        <Header />
         
         <div className="container max-w-4xl mx-auto px-4 py-12">
           <div className="text-center">
@@ -265,20 +254,7 @@ const TodaysFeeds = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="text-xl font-bold text-foreground">BLOCKFEED</div>
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">FEATURES</a>
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">ABOUT</a>
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">PRICING</a>
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">CONTACT</a>
-            <Button variant="ghost" size="sm">SIGN IN</Button>
-            <Button size="sm">GET STARTED</Button>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container max-w-4xl mx-auto px-4 py-12">
