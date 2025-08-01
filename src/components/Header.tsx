@@ -1,8 +1,28 @@
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Github } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import blockfeedLogo from "@/assets/blockfeed-logo.png";
 
 const Header = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
       <div className="container mx-auto px-4">
@@ -33,14 +53,23 @@ const Header = () => {
               <Github className="w-4 h-4 mr-2" />
               GitHub
             </Button>
-            <Button 
-              variant="default" 
-              size="sm" 
-              className="font-mono uppercase tracking-wide"
-              onClick={() => window.location.href = '/auth'}
-            >
-              Get Started
-            </Button>
+            {user ? (
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} />
+                <AvatarFallback className="text-xs font-mono">
+                  {user.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="font-mono uppercase tracking-wide"
+                onClick={() => window.location.href = '/auth'}
+              >
+                Get Started
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
