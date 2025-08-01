@@ -158,6 +158,20 @@ const ChatBot: React.FC<ChatBotProps> = ({ articles }) => {
                   </div>
                 </div>
               ))}
+              {/* Show pre-written prompt only after initial message */}
+              {messages.length === 1 && !isLoading && (
+                <div className="flex justify-start">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSummarizeFeed}
+                    disabled={isLoading}
+                    className="text-xs"
+                  >
+                    Summarize my feed
+                  </Button>
+                </div>
+              )}
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-muted text-muted-foreground p-2 rounded-lg text-sm">
@@ -165,19 +179,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ articles }) => {
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Pre-written prompts */}
-            <div className="px-4 pb-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSummarizeFeed}
-                disabled={isLoading}
-                className="w-full text-xs"
-              >
-                Summarize my feed
-              </Button>
             </div>
 
             {/* Input */}
