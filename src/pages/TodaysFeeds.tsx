@@ -243,7 +243,7 @@ const TodaysFeeds = () => {
       <div className="min-h-screen bg-background">
         <Header />
         
-        <div className="container max-w-4xl mx-auto px-4 py-12">
+        <div className="container max-w-4xl mx-auto px-4 py-12 pt-24">
           <div className="text-center">
             <div className="animate-pulse">Loading your personalized feed...</div>
           </div>
@@ -257,7 +257,7 @@ const TodaysFeeds = () => {
       <Header />
 
       {/* Main Content */}
-      <main className="container max-w-4xl mx-auto px-4 py-12">
+      <main className="container max-w-4xl mx-auto px-4 py-12 pt-24">
         {/* Page Title */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
