@@ -54,7 +54,10 @@ const Header = () => {
               GitHub
             </Button>
             {user ? (
-              <Avatar className="h-8 w-8">
+              <Avatar 
+                className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => window.location.href = '/account'}
+              >
                 <AvatarImage src={user.user_metadata?.avatar_url} />
                 <AvatarFallback className="text-xs font-mono">
                   {user.email?.charAt(0).toUpperCase()}
