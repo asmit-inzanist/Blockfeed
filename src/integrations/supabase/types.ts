@@ -53,6 +53,87 @@ export type Database = {
         }
         Relationships: []
       }
+      liked_articles: {
+        Row: {
+          article_category: string
+          article_link: string
+          article_source: string
+          article_title: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          article_category: string
+          article_link: string
+          article_source: string
+          article_title: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          article_category?: string
+          article_link?: string
+          article_source?: string
+          article_title?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_articles: {
+        Row: {
+          article_category: string
+          article_link: string
+          article_source: string
+          article_title: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          article_category: string
+          article_link: string
+          article_source: string
+          article_title: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          article_category?: string
+          article_link?: string
+          article_source?: string
+          article_title?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_activity: {
+        Row: {
+          activity_date: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_date: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           created_at: string
