@@ -74,7 +74,7 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          {totalDays} contributions in the last year
+          {totalDays} days visited
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -279,8 +279,8 @@ const AccountPage = () => {
                       {user.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-medium text-sm">{user.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{user.email}</p>
                     <p className="text-xs text-muted-foreground">
                       Member since {new Date(user.created_at).toLocaleDateString()}
                     </p>
