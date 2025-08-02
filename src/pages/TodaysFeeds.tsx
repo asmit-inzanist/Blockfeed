@@ -278,7 +278,7 @@ const TodaysFeeds = () => {
         />
 
         {/* Your Interests Section */}
-        <div className="bg-card border rounded-lg p-6 mb-8">
+        <div className="bg-card border rounded-2xl p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-card-foreground">Your Interests</h2>
             <div className="flex items-center gap-2">

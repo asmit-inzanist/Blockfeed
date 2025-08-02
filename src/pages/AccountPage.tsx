@@ -109,7 +109,7 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`w-3 h-3 rounded-sm ${
+                      className={`w-3 h-3 rounded-full ${
                         dayData ? getColorClass(dayData.count) : 'bg-transparent'
                       }`}
                       title={dayData ? `${dayData.date}: ${dayData.count} contributions` : ''}
@@ -124,10 +124,10 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Less</span>
             <div className="flex gap-1">
-              <div className="w-3 h-3 bg-muted rounded-sm"></div>
-              <div className="w-3 h-3 bg-green-200 rounded-sm"></div>
-              <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
-              <div className="w-3 h-3 bg-green-600 rounded-sm"></div>
+              <div className="w-3 h-3 bg-muted rounded-full"></div>
+              <div className="w-3 h-3 bg-green-200 rounded-full"></div>
+              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
             </div>
             <span>More</span>
           </div>
