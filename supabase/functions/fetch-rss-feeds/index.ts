@@ -7,20 +7,38 @@ const corsHeaders = {
 }
 
 const RSS_FEEDS = {
-  'BBC News': 'http://feeds.bbci.co.uk/news/rss.xml',
-  'BBC Tech': 'http://feeds.bbci.co.uk/news/technology/rss.xml',
-  'BBC Business': 'http://feeds.bbci.co.uk/news/business/rss.xml',
-  'BBC Health': 'http://feeds.bbci.co.uk/news/health/rss.xml',
-  'BBC Entertainment': 'http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml',
-  'Guardian World': 'https://www.theguardian.com/world/rss',
-  'Guardian Tech': 'https://www.theguardian.com/uk/technology/rss',
-  'Guardian Business': 'https://www.theguardian.com/uk/business/rss',
-  'Guardian Sport': 'https://www.theguardian.com/uk/sport/rss',
-  'Guardian Science': 'https://www.theguardian.com/science/rss',
+  // Technology
   'TechCrunch': 'https://techcrunch.com/feed/',
-  'Reuters Tech': 'http://feeds.reuters.com/reuters/technologyNews',
-  'Reuters Business': 'http://feeds.reuters.com/reuters/businessNews',
-  'Reuters Health': 'http://feeds.reuters.com/reuters/healthNews'
+  'Gadgets 360': 'https://www.gadgets360.com/rss',
+  
+  // Finance
+  'Financial Times': 'https://www.ft.com/?format=rss',
+  'Benzinga': 'https://feeds.benzinga.com/benzinga',
+  'MarketBeat': 'https://marketbeat.com/feed',
+  
+  // Sports
+  'NDTV Sports': 'https://feeds.feedburner.com/ndtvsports-latest',
+  'Times of India Sports': 'https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms',
+  
+  // Politics
+  'ThePrint Politics': 'https://theprint.in/category/politics/feed/',
+  'Times of India Politics': 'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',
+  
+  // Health
+  'Medical Xpress': 'https://medicalxpress.com/rss-feed',
+  'MedlinePlus': 'https://medlineplus.gov/feeds/news_en.xml',
+  
+  // Entertainment
+  'Entertainment Tonight': 'https://www.etonline.com/news/rss',
+  'TMZ': 'https://www.tmz.com/rss.xml',
+  
+  // Science
+  'Science Daily': 'https://www.sciencedaily.com/rss/top/science.xml',
+  'New Scientist': 'https://www.newscientist.com/feed/home',
+  
+  // World News
+  'BBC World News': 'http://feeds.bbci.co.uk/news/world/rss.xml',
+  'NBC News': 'https://feeds.nbcnews.com/nbcnews/public/news'
 }
 
 interface Article {
@@ -69,13 +87,14 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
-  if (sourceLower.includes('tech')) return 'Technology'
-  if (sourceLower.includes('business')) return 'Finance'
-  if (sourceLower.includes('sport')) return 'Sports'
-  if (sourceLower.includes('health')) return 'Health'
-  if (sourceLower.includes('entertainment')) return 'Entertainment'
+  if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology'
+  if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || sourceLower.includes('marketbeat')) return 'Finance'
+  if (sourceLower.includes('sports') || sourceLower.includes('sport')) return 'Sports'
+  if (sourceLower.includes('politics') || sourceLower.includes('theprint')) return 'Politics'
+  if (sourceLower.includes('medical') || sourceLower.includes('medlineplus')) return 'Health'
+  if (sourceLower.includes('entertainment') || sourceLower.includes('tmz')) return 'Entertainment'
   if (sourceLower.includes('science')) return 'Science'
-  if (sourceLower.includes('world')) return 'World News'
+  if (sourceLower.includes('world') || sourceLower.includes('bbc') || sourceLower.includes('nbc')) return 'World News'
   return 'General'
 }
 
