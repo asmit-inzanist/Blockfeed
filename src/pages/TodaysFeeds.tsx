@@ -90,6 +90,17 @@ const TodaysFeeds = () => {
       let currentInterests = ['Technology', 'AI']; // default
       
       if (user) {
+        // Track user activity when they visit the feed page
+        const today = new Date().toISOString().split('T')[0];
+        await supabase
+          .from('user_activity')
+          .upsert({ 
+            user_id: user.id, 
+            activity_date: today 
+          }, { 
+            onConflict: 'user_id,activity_date' 
+          });
+
         const { data: preferences } = await supabase
           .from('user_preferences')
           .select('interests, custom_interests')

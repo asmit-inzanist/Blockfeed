@@ -163,58 +163,55 @@ const AccountPage = () => {
   }, []);
 
   const loadLikedArticles = async (userId: string) => {
-    // Temporarily disabled until types are updated
-    // const { data, error } = await supabase
-    //   .from('liked_articles')
-    //   .select('*')
-    //   .eq('user_id', userId)
-    //   .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('liked_articles')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
     
-    // if (!error && data) {
-    //   setLikedArticles(data);
-    // }
+    if (!error && data) {
+      setLikedArticles(data);
+    }
   };
 
   const loadSavedArticles = async (userId: string) => {
-    // Temporarily disabled until types are updated
-    // const { data, error } = await supabase
-    //   .from('saved_articles')
-    //   .select('*')
-    //   .eq('user_id', userId)
-    //   .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('saved_articles')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
     
-    // if (!error && data) {
-    //   setSavedArticles(data);
-    // }
+    if (!error && data) {
+      setSavedArticles(data);
+    }
   };
 
   const loadActivityData = async (userId: string) => {
-    // Temporarily disabled until types are updated
     // Get activity data from the last year
-    // const oneYearAgo = new Date();
-    // oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     
-    // const { data, error } = await supabase
-    //   .from('user_activity')
-    //   .select('activity_date')
-    //   .eq('user_id', userId)
-    //   .gte('activity_date', oneYearAgo.toISOString().split('T')[0]);
+    const { data, error } = await supabase
+      .from('user_activity')
+      .select('activity_date')
+      .eq('user_id', userId)
+      .gte('activity_date', oneYearAgo.toISOString().split('T')[0]);
     
-    // if (!error && data) {
-    //   // Count activities per date
-    //   const activityMap = new Map();
-    //   data.forEach(activity => {
-    //     const date = activity.activity_date;
-    //     activityMap.set(date, (activityMap.get(date) || 0) + 1);
-    //   });
+    if (!error && data) {
+      // Count activities per date
+      const activityMap = new Map();
+      data.forEach(activity => {
+        const date = activity.activity_date;
+        activityMap.set(date, (activityMap.get(date) || 0) + 1);
+      });
       
-    //   const formattedData = Array.from(activityMap.entries()).map(([date, count]) => ({
-    //     date,
-    //     count
-    //   }));
+      const formattedData = Array.from(activityMap.entries()).map(([date, count]) => ({
+        date,
+        count
+      }));
       
-    //   setActivityData(formattedData);
-    // }
+      setActivityData(formattedData);
+    }
   };
 
   const handleSignOut = async () => {
@@ -223,21 +220,19 @@ const AccountPage = () => {
   };
 
   const removeLikedArticle = async (articleId: string) => {
-    // Temporarily disabled until types are updated
-    // await supabase
-    //   .from('liked_articles')
-    //   .delete()
-    //   .eq('id', articleId);
+    await supabase
+      .from('liked_articles')
+      .delete()
+      .eq('id', articleId);
     
     setLikedArticles(prev => prev.filter(article => article.id !== articleId));
   };
 
   const removeSavedArticle = async (articleId: string) => {
-    // Temporarily disabled until types are updated
-    // await supabase
-    //   .from('saved_articles')
-    //   .delete()
-    //   .eq('id', articleId);
+    await supabase
+      .from('saved_articles')
+      .delete()
+      .eq('id', articleId);
     
     setSavedArticles(prev => prev.filter(article => article.id !== articleId));
   };
