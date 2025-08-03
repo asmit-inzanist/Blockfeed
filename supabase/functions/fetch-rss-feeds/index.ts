@@ -87,12 +87,14 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
+  // Check entertainment first to avoid sports misclassification
+  if (sourceLower.includes('entertainment') || sourceLower.includes('tmz')) return 'Entertainment'
+  // More specific sports matching
+  if (sourceLower.includes('ndtv sports') || (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))) return 'Sports'
   if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology'
   if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || sourceLower.includes('marketbeat')) return 'Finance'
-  if (sourceLower.includes('sports') || sourceLower.includes('sport')) return 'Sports'
   if (sourceLower.includes('politics') || sourceLower.includes('theprint')) return 'Politics'
   if (sourceLower.includes('medical') || sourceLower.includes('medlineplus')) return 'Health'
-  if (sourceLower.includes('entertainment') || sourceLower.includes('tmz')) return 'Entertainment'
   if (sourceLower.includes('science')) return 'Science'
   if (sourceLower.includes('world') || sourceLower.includes('bbc') || sourceLower.includes('nbc')) return 'World News'
   return 'General'
