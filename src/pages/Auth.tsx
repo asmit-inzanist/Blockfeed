@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,16 +15,23 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  const returnUrl = searchParams.get('returnUrl') || '/';
+  const openBriefing = searchParams.get('openBriefing') === 'true';
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
-        if (session?.user) {
-          // Redirect to main page if authenticated
-          navigate('/');
+        if (event === 'SIGNED_IN') {
+          if (openBriefing) {
+            navigate('/?openBriefing=true');
+          } else {
+            navigate(returnUrl);
+          }
         }
       }
     );
@@ -33,12 +40,16 @@ const Auth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        navigate('/');
+        if (openBriefing) {
+          navigate('/?openBriefing=true');
+        } else {
+          navigate(returnUrl);
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, returnUrl, openBriefing]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +57,7 @@ const Auth = () => {
 
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}${openBriefing ? '/?openBriefing=true' : returnUrl}`;
       
       const { error } = await supabase.auth.signUp({
         email,

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      briefing_preferences: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          interests: string[]
+          is_active: boolean
+          last_sent_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          interests?: string[]
+          is_active?: boolean
+          last_sent_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          interests?: string[]
+          is_active?: boolean
+          last_sent_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       curated_articles: {
         Row: {
           ai_score: number | null

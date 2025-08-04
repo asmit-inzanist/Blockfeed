@@ -1,12 +1,42 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, Brain } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import DailyBriefingModal from "./DailyBriefingModal";
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [user, setUser] = useState(null);
+  const [briefingModalOpen, setBriefingModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Check auth state
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Check if we should open briefing modal from URL
+    if (searchParams.get('openBriefing') === 'true') {
+      setBriefingModalOpen(true);
+      // Clear the URL parameter
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('openBriefing');
+      navigate({ search: newSearchParams.toString() }, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleStartJourney = () => {
     navigate('/todays-feeds');
+  };
+
+  const handleDailyBriefing = () => {
+    if (user) {
+      setBriefingModalOpen(true);
+    } else {
+      navigate('/auth?openBriefing=true');
+    }
   };
 
   return (
@@ -78,9 +108,14 @@ const HeroSection = () => {
               Start Your Journey
             </Button>
             
-            <Button variant="outline" size="xl" className="font-mono uppercase tracking-wider">
+            <Button 
+              variant="outline" 
+              size="xl" 
+              className="font-mono uppercase tracking-wider"
+              onClick={handleDailyBriefing}
+            >
               <Brain className="h-5 w-5" />
-              Learn More
+              Get your daily briefing here
             </Button>
           </div>
 
@@ -101,6 +136,12 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
+      
+      <DailyBriefingModal
+        open={briefingModalOpen}
+        onOpenChange={setBriefingModalOpen}
+        userEmail={user?.email}
+      />
     </section>
   );
 };
