@@ -381,6 +381,11 @@ serve(async (req) => {
       html: emailHTML,
     });
 
+    if (emailResult.error) {
+      console.error('Email sending failed:', emailResult.error);
+      throw new Error(`Email sending failed: ${emailResult.error.message}`);
+    }
+
     console.log('Email sent successfully:', emailResult);
 
     // Update last sent date if userId provided
