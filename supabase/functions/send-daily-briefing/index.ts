@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { Resend } from 'npm:resend@2.0.0';
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,27 +58,21 @@ async function parseRSSFeed(xmlText: string, source: string): Promise<Article[]>
   const articles: Article[] = [];
   
   try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlText, 'text/xml');
+    // Simple regex-based XML parsing for RSS feeds
+    const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+    const items = xmlText.match(itemRegex) || [];
     
-    if (!doc) {
-      console.error(`Failed to parse XML for ${source}`);
-      return articles;
-    }
-    
-    const items = doc.querySelectorAll('item');
-    
-    items.forEach((item) => {
+    items.forEach((itemXml) => {
       try {
-        const titleEl = item.querySelector('title');
-        const descEl = item.querySelector('description');
-        const linkEl = item.querySelector('link');
-        const pubDateEl = item.querySelector('pubDate');
+        const titleMatch = itemXml.match(/<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/i);
+        const descMatch = itemXml.match(/<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>|<description[^>]*>(.*?)<\/description>/i);
+        const linkMatch = itemXml.match(/<link[^>]*>(.*?)<\/link>/i);
+        const pubDateMatch = itemXml.match(/<pubDate[^>]*>(.*?)<\/pubDate>/i);
         
-        const title = titleEl?.textContent?.trim() || '';
-        const description = descEl?.textContent?.trim() || '';
-        const link = linkEl?.textContent?.trim() || '';
-        const pubDate = pubDateEl?.textContent?.trim() || '';
+        const title = (titleMatch?.[1] || titleMatch?.[2] || '').trim();
+        const description = (descMatch?.[1] || descMatch?.[2] || '').trim();
+        const link = (linkMatch?.[1] || '').trim();
+        const pubDate = (pubDateMatch?.[1] || '').trim();
         
         if (title && link) {
           articles.push({
