@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { Resend } from 'npm:resend@2.0.0';
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,31 +41,62 @@ const RSS_FEEDS = {
   'ThePrint': 'https://theprint.in/feed/'
 };
 
+function cleanText(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/<[^>]*>/g, '')
+    .trim();
+}
+
 async function parseRSSFeed(xmlText: string, source: string): Promise<Article[]> {
   const articles: Article[] = [];
   
   try {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlText, 'application/xml');
+    const doc = parser.parseFromString(xmlText, 'text/xml');
+    
+    if (!doc) {
+      console.error(`Failed to parse XML for ${source}`);
+      return articles;
+    }
+    
     const items = doc.querySelectorAll('item');
     
     items.forEach((item) => {
-      const title = item.querySelector('title')?.textContent?.trim() || '';
-      const description = item.querySelector('description')?.textContent?.trim() || '';
-      const link = item.querySelector('link')?.textContent?.trim() || '';
-      const pubDate = item.querySelector('pubDate')?.textContent?.trim() || '';
-      
-      if (title && link) {
-        articles.push({
-          title: title.replace(/&[#\w]+;/g, ''),
-          description: description.replace(/&[#\w]+;/g, '').replace(/<[^>]*>/g, ''),
-          link,
-          source,
-          category: getCategoryFromSource(source),
-          published_at: pubDate || new Date().toISOString()
-        });
+      try {
+        const titleEl = item.querySelector('title');
+        const descEl = item.querySelector('description');
+        const linkEl = item.querySelector('link');
+        const pubDateEl = item.querySelector('pubDate');
+        
+        const title = titleEl?.textContent?.trim() || '';
+        const description = descEl?.textContent?.trim() || '';
+        const link = linkEl?.textContent?.trim() || '';
+        const pubDate = pubDateEl?.textContent?.trim() || '';
+        
+        if (title && link) {
+          articles.push({
+            title: cleanText(title),
+            description: cleanText(description),
+            link: link,
+            source,
+            category: getCategoryFromSource(source),
+            published_at: pubDate || new Date().toISOString()
+          });
+        }
+      } catch (itemError) {
+        console.error(`Error parsing item from ${source}:`, itemError);
       }
     });
+    
+    console.log(`Successfully parsed ${articles.length} articles from ${source}`);
   } catch (error) {
     console.error(`Error parsing RSS for ${source}:`, error);
   }
@@ -324,15 +356,21 @@ serve(async (req) => {
 
     console.log(`Found ${recentArticles.length} articles from last 24 hours`);
 
-    // Use all filtered articles if not enough recent ones
-    const articlesToProcess = recentArticles.length >= 8 ? recentArticles : filteredArticles;
+    // Use all filtered articles if not enough recent ones, or fallback to all articles
+    let articlesToProcess = recentArticles.length >= 8 ? recentArticles : filteredArticles;
+    
+    // If still no articles, use all articles regardless of interests as fallback
+    if (articlesToProcess.length === 0) {
+      console.log('No filtered articles found, using all articles as fallback');
+      articlesToProcess = allArticles.slice(0, 20); // Take top 20 articles
+    }
 
     // Summarize and rank with AI
     const finalArticles = await summarizeAndRankArticles(articlesToProcess, interests);
     console.log(`Final selection: ${finalArticles.length} articles`);
 
     if (finalArticles.length === 0) {
-      throw new Error('No relevant articles found for briefing');
+      throw new Error('No articles found for briefing - please try again later');
     }
 
     // Generate and send email
