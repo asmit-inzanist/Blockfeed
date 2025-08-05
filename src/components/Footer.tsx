@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="pixel-border bg-card mt-20">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -23,40 +23,18 @@ const Footer = () => {
               </div>
             </div>
             <p className="text-muted-foreground font-mono text-sm leading-relaxed">
-              The future of personalized AI news, delivered with retro style and cutting-edge blockchain technology.
+              A personal project exploring AI-powered news curation with a retro-futuristic twist.
             </p>
           </div>
 
-          {/* Product */}
+          {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="font-bold font-mono uppercase tracking-wide text-neon-cyan">Product</h3>
+            <h3 className="font-bold font-mono uppercase tracking-wide text-neon-cyan">Quick Links</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Features</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Pricing</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">API</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Roadmap</a></li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div className="space-y-4">
-            <h3 className="font-bold font-mono uppercase tracking-wide text-neon-purple">Company</h3>
-            <ul className="space-y-2 text-sm">
+              <li><a href="/todays-feeds" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Today's Feeds</a></li>
+              <li><a href="/auth" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Get Started</a></li>
+              <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Features</a></li>
               <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">About</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Blog</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Careers</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Contact</a></li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div className="space-y-4">
-            <h3 className="font-bold font-mono uppercase tracking-wide text-neon-pink">Support</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Help Center</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Privacy</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Terms</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-mono">Status</a></li>
             </ul>
           </div>
         </div>
