@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,6 +29,7 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
   const [email, setEmail] = useState(userEmail || "");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [loadingPreferences, setLoadingPreferences] = useState(false);
   const { toast } = useToast();
 
@@ -165,6 +166,68 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
     }
   };
 
+  const handleTestBriefing = async () => {
+    if (selectedInterests.length === 0) {
+      toast({
+        title: "Select Interests",
+        description: "Please select at least one interest category to test.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address to test.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setTestLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to test your daily briefing.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Call the send-daily-briefing function directly for testing
+      const { data, error } = await supabase.functions.invoke('send-daily-briefing', {
+        body: {
+          email: email.trim(),
+          interests: selectedInterests,
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Test Briefing Sent!",
+        description: `Your test briefing with ${data.articlesCount} articles has been sent to ${email}.`,
+      });
+
+    } catch (error) {
+      console.error('Error sending test briefing:', error);
+      toast({
+        title: "Test Failed",
+        description: "Failed to send test briefing. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md mx-4">
@@ -220,25 +283,47 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
               />
             </div>
 
-            {/* Submit Button */}
-            <Button 
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Setting Up...
-                </>
-              ) : (
-                <>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Get My Daily Update
-                </>
-              )}
-            </Button>
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button 
+                onClick={handleSubmit}
+                disabled={loading || testLoading}
+                className="w-full"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Setting Up...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Get My Daily Update
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleTestBriefing}
+                disabled={loading || testLoading}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                {testLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Sending Test...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Test Briefing Now
+                  </>
+                )}
+              </Button>
+            </div>
 
             <p className="text-xs text-muted-foreground text-center">
               You'll receive your personalized news briefing every day at 9:00 AM
