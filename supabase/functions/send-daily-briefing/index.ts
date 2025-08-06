@@ -229,7 +229,7 @@ ${articlesText}`;
   return articles.slice(0, 8);
 }
 
-function generateEmailHTML(articles: Article[], userEmail: string): string {
+function generateEmailHTML(articles: Article[], userEmail: string, isTest: boolean = false): string {
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -237,22 +237,74 @@ function generateEmailHTML(articles: Article[], userEmail: string): string {
     day: 'numeric' 
   });
 
-  const articleElements = articles.map(article => `
+  // Generate test articles if this is a test email and no articles provided
+  const testArticles: Article[] = [
+    {
+      title: "Breaking: Major AI Breakthrough Announced",
+      description: "Researchers unveil new artificial intelligence system that can understand context better than ever before.",
+      link: "https://example.com/ai-breakthrough",
+      source: "TechCrunch",
+      category: "Technology",
+      published_at: new Date().toISOString(),
+      ai_summary: "Scientists have developed a revolutionary AI system that demonstrates unprecedented contextual understanding, potentially transforming how machines interpret human language. This breakthrough could have significant implications for natural language processing applications.",
+      ai_score: 9
+    },
+    {
+      title: "Global Markets Rally as Economic Indicators Improve",
+      description: "Stock markets worldwide see significant gains following positive economic data releases.",
+      link: "https://example.com/market-rally",
+      source: "Reuters",
+      category: "Finance",
+      published_at: new Date().toISOString(),
+      ai_summary: "Major stock indices posted strong gains today as investors responded positively to encouraging economic indicators. The rally suggests growing confidence in global economic recovery prospects.",
+      ai_score: 8
+    },
+    {
+      title: "Revolutionary Climate Technology Shows Promise",
+      description: "New carbon capture technology could significantly impact global warming efforts.",
+      link: "https://example.com/climate-tech",
+      source: "BBC News",
+      category: "Science",
+      published_at: new Date().toISOString(),
+      ai_summary: "Engineers have developed an innovative carbon capture system that operates at unprecedented efficiency levels. This technology could play a crucial role in achieving global climate targets by 2030.",
+      ai_score: 7
+    },
+    {
+      title: "Space Mission Discovers Unexpected Findings",
+      description: "Latest space exploration mission reveals surprising data about distant planets.",
+      link: "https://example.com/space-discovery",
+      source: "NASA",
+      category: "Science",
+      published_at: new Date().toISOString(),
+      ai_summary: "Recent space mission data has unveiled unexpected characteristics of exoplanets in nearby star systems. These findings could reshape our understanding of planetary formation and the potential for extraterrestrial life.",
+      ai_score: 6
+    }
+  ];
+
+  const articlesToShow = isTest && articles.length === 0 ? testArticles : articles;
+
+  const articleElements = articlesToShow.map(article => `
     <div style="margin-bottom: 30px; padding: 20px; border: 1px solid #e1e5e9; border-radius: 8px; background-color: #ffffff;">
-      <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+      <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #1a1a1a; line-height: 1.3;">
         <a href="${article.link}" style="color: #1a1a1a; text-decoration: none;" target="_blank">${article.title}</a>
       </h3>
-      <div style="font-size: 12px; color: #666; margin-bottom: 10px; font-weight: 500;">
+      <div style="font-size: 12px; color: #666; margin-bottom: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
         ${article.source} • ${article.category}
       </div>
-      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4a4a4a;">
+      <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #4a4a4a;">
         ${article.ai_summary || article.description}
       </p>
-      <a href="${article.link}" style="color: #2563eb; text-decoration: none; font-size: 14px; font-weight: 500;" target="_blank">
-        Read full article →
+      <a href="${article.link}" style="color: #2563eb; text-decoration: none; font-size: 14px; font-weight: 500; display: inline-block; padding: 8px 16px; border: 1px solid #2563eb; border-radius: 4px; transition: all 0.2s;" target="_blank">
+        Read More →
       </a>
     </div>
   `).join('');
+
+  const testBadge = isTest ? `
+    <div style="background-color: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 10px 20px; margin: 20px; border-radius: 6px; text-align: center; font-size: 14px; font-weight: 500;">
+      📧 This is a test email with sample content
+    </div>
+  ` : '';
 
   return `
     <!DOCTYPE html>
@@ -260,32 +312,49 @@ function generateEmailHTML(articles: Article[], userEmail: string): string {
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Your Daily News Briefing</title>
+        <title>Daily News Briefing - Test Email</title>
+        <style>
+          @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .content { padding: 20px !important; }
+            .header { padding: 20px !important; }
+          }
+        </style>
     </head>
-    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; line-height: 1.6;">
+        <div class="container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+            ${testBadge}
+            
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 40px; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px; font-weight: 700;">Your Daily News Briefing</h1>
-                <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">${today}</p>
+            <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Daily News Briefing</h1>
+                <p style="margin: 15px 0 0 0; font-size: 18px; opacity: 0.95; font-weight: 300;">${today}</p>
             </div>
             
             <!-- Content -->
-            <div style="padding: 40px;">
-                <p style="margin: 0 0 30px 0; font-size: 16px; color: #4a4a4a;">
-                    Good morning! Here are the top stories personalized for your interests:
+            <div class="content" style="padding: 40px;">
+                <p style="margin: 0 0 30px 0; font-size: 16px; color: #4a4a4a; text-align: center;">
+                    ${isTest ? '📰 Here\'s a sample of your personalized daily briefing:' : 'Good morning! Here are the top stories personalized for your interests:'}
                 </p>
                 
                 ${articleElements}
+                
+                ${isTest ? `
+                <div style="margin-top: 40px; padding: 20px; background-color: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; text-align: center;">
+                  <p style="margin: 0; font-size: 14px; color: #0369a1;">
+                    ✨ This is just a preview! Your actual daily briefing will contain real news articles tailored to your interests.
+                  </p>
+                </div>
+                ` : ''}
             </div>
             
             <!-- Footer -->
-            <div style="background-color: #f8fafc; padding: 30px 40px; text-align: center; border-top: 1px solid #e1e5e9;">
+            <div style="background-color: #f8fafc; padding: 30px 40px; text-align: center; border-top: 1px solid #e1e5e9; border-radius: 0 0 8px 8px;">
                 <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">
-                    This briefing was generated for ${userEmail}
+                    ${isTest ? `Test email sent to ${userEmail}` : `This briefing was generated for ${userEmail}`}
                 </p>
-                <p style="margin: 0; font-size: 12px; color: #999;">
-                    Powered by BlockFeed AI News Curation
+                <p style="margin: 0; font-size: 12px; color: #999; font-weight: 500;">
+                    Powered by BlockFeed Daily Briefing
                 </p>
             </div>
         </div>
@@ -366,18 +435,21 @@ serve(async (req) => {
       throw new Error('No articles found for briefing - please try again later');
     }
 
-    // Generate and send email
-    const emailHTML = generateEmailHTML(finalArticles, email);
+    // Generate email
     const today = new Date().toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
       year: 'numeric' 
     });
 
+    // Determine if this is a test email (no userId provided)
+    const isTestEmail = !userId;
+    const emailHTML = generateEmailHTML(finalArticles, email, isTestEmail);
+    
     const emailResult = await resend.emails.send({
-      from: 'BlockFeed <daily@blockfeed.news>',
+      from: 'BlockFeed Daily Briefing <noreply@resend.dev>',
       to: [email],
-      subject: `Your Daily News Briefing - ${today}`,
+      subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
       html: emailHTML,
     });
 
