@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Resend } from 'npm:resend@2.0.0';
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -240,68 +240,58 @@ function generateEmailHTML(articles: Article[], userEmail: string, isTest: boole
   // Generate test articles if this is a test email and no articles provided
   const testArticles: Article[] = [
     {
-      title: "Breaking: Major AI Breakthrough Announced",
-      description: "Researchers unveil new artificial intelligence system that can understand context better than ever before.",
-      link: "https://example.com/ai-breakthrough",
-      source: "TechCrunch",
-      category: "Technology",
+      title: "Microsoft brings OpenAI's smallest open model to Windows users",
+      description: "Microsoft is bringing OpenAI's smaller, open-source GPT model to Windows 11 users. This is important for technology users interested in AI accessibility.",
+      link: "https://example.com/microsoft-openai",
+      source: "TECHCRUNCH",
+      category: "TECHNOLOGY",
       published_at: new Date().toISOString(),
-      ai_summary: "Scientists have developed a revolutionary AI system that demonstrates unprecedented contextual understanding, potentially transforming how machines interpret human language. This breakthrough could have significant implications for natural language processing applications.",
+      ai_summary: "Microsoft is bringing OpenAI's smaller, open-source GPT model to Windows 11 users. This is important for technology users interested in AI accessibility and the development of open-source AI models.",
       ai_score: 9
     },
     {
-      title: "Global Markets Rally as Economic Indicators Improve",
-      description: "Stock markets worldwide see significant gains following positive economic data releases.",
-      link: "https://example.com/market-rally",
-      source: "Reuters",
-      category: "Finance",
+      title: "Cohere's new AI agent platform, North, promises to keep enterprise data secure",
+      description: "Cohere's new AI platform, North, prioritizes data security by allowing private deployment. This is important for technology users concerned about data privacy.",
+      link: "https://example.com/cohere-north",
+      source: "TECHCRUNCH",
+      category: "TECHNOLOGY",
       published_at: new Date().toISOString(),
-      ai_summary: "Major stock indices posted strong gains today as investors responded positively to encouraging economic indicators. The rally suggests growing confidence in global economic recovery prospects.",
+      ai_summary: "Cohere's new AI platform, North, prioritizes data security by allowing private deployment. This is important for technology users concerned about data privacy and the security of AI applications in enterprise settings.",
       ai_score: 8
     },
     {
-      title: "Revolutionary Climate Technology Shows Promise",
-      description: "New carbon capture technology could significantly impact global warming efforts.",
-      link: "https://example.com/climate-tech",
-      source: "BBC News",
-      category: "Science",
+      title: "Global Markets Rally as Economic Indicators Improve",
+      description: "Stock markets worldwide see significant gains following positive economic data releases and improved investor sentiment.",
+      link: "https://example.com/market-rally",
+      source: "REUTERS",
+      category: "FINANCE",
       published_at: new Date().toISOString(),
-      ai_summary: "Engineers have developed an innovative carbon capture system that operates at unprecedented efficiency levels. This technology could play a crucial role in achieving global climate targets by 2030.",
+      ai_summary: "Major stock indices posted strong gains today as investors responded positively to encouraging economic indicators. The rally suggests growing confidence in global economic recovery prospects and improved corporate earnings outlook.",
       ai_score: 7
-    },
-    {
-      title: "Space Mission Discovers Unexpected Findings",
-      description: "Latest space exploration mission reveals surprising data about distant planets.",
-      link: "https://example.com/space-discovery",
-      source: "NASA",
-      category: "Science",
-      published_at: new Date().toISOString(),
-      ai_summary: "Recent space mission data has unveiled unexpected characteristics of exoplanets in nearby star systems. These findings could reshape our understanding of planetary formation and the potential for extraterrestrial life.",
-      ai_score: 6
     }
   ];
 
   const articlesToShow = isTest && articles.length === 0 ? testArticles : articles;
 
   const articleElements = articlesToShow.map(article => `
-    <div style="margin-bottom: 30px; padding: 20px; border: 1px solid #e1e5e9; border-radius: 8px; background-color: #ffffff;">
-      <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #1a1a1a; line-height: 1.3;">
-        <a href="${article.link}" style="color: #1a1a1a; text-decoration: none;" target="_blank">${article.title}</a>
+    <div style="margin-bottom: 24px; padding: 0; background-color: #ffffff;">
+      <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1f2937; line-height: 1.4;">
+        ${article.title}
       </h3>
-      <div style="font-size: 12px; color: #666; margin-bottom: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
+      <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
         ${article.source} • ${article.category}
       </div>
-      <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #4a4a4a;">
+      <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #4b5563;">
         ${article.ai_summary || article.description}
       </p>
-      <a href="${article.link}" style="color: #2563eb; text-decoration: none; font-size: 14px; font-weight: 500; display: inline-block; padding: 8px 16px; border: 1px solid #2563eb; border-radius: 4px; transition: all 0.2s;" target="_blank">
+      <a href="${article.link}" style="color: #3b82f6; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 4px; display: inline-block; transition: all 0.2s;" target="_blank">
         Read More →
       </a>
     </div>
   `).join('');
 
   const testBadge = isTest ? `
-    <div style="background-color: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 10px 20px; margin: 20px; border-radius: 6px; text-align: center; font-size: 14px; font-weight: 500;">
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; margin: 0 0 20px 0; font-size: 13px;">
       📧 This is a test email with sample content
     </div>
   ` : '';
@@ -312,48 +302,51 @@ function generateEmailHTML(articles: Article[], userEmail: string, isTest: boole
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Daily News Briefing - Test Email</title>
+        <title>Daily News Briefing</title>
         <style>
           @media only screen and (max-width: 600px) {
-            .container { width: 100% !important; }
+            .container { width: 100% !important; margin: 0 !important; }
             .content { padding: 20px !important; }
-            .header { padding: 20px !important; }
+            .header { padding: 30px 20px !important; }
           }
         </style>
     </head>
-    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; line-height: 1.6;">
-        <div class="container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
-            ${testBadge}
+    <body style="margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9fafb; line-height: 1.6;">
+        <div class="container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
             
             <!-- Header -->
-            <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="margin: 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Daily News Briefing</h1>
-                <p style="margin: 15px 0 0 0; font-size: 18px; opacity: 0.95; font-weight: 300;">${today}</p>
+            <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Daily News Briefing</h1>
+                <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9; font-weight: 400;">${today}</p>
             </div>
             
+            ${testBadge}
+            
             <!-- Content -->
-            <div class="content" style="padding: 40px;">
-                <p style="margin: 0 0 30px 0; font-size: 16px; color: #4a4a4a; text-align: center;">
-                    ${isTest ? '📰 Here\'s a sample of your personalized daily briefing:' : 'Good morning! Here are the top stories personalized for your interests:'}
-                </p>
+            <div class="content" style="padding: 30px;">
+                <div style="margin-bottom: 24px; padding: 12px; background-color: #f8fafc; border-radius: 6px; text-align: center;">
+                  <p style="margin: 0; font-size: 14px; color: #64748b;">
+                    📰 ${isTest ? 'Here\'s a sample of your personalized daily briefing:' : 'Here are today\'s top stories personalized for your interests:'}
+                  </p>
+                </div>
                 
                 ${articleElements}
                 
                 ${isTest ? `
-                <div style="margin-top: 40px; padding: 20px; background-color: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; text-align: center;">
-                  <p style="margin: 0; font-size: 14px; color: #0369a1;">
-                    ✨ This is just a preview! Your actual daily briefing will contain real news articles tailored to your interests.
+                <div style="margin-top: 30px; padding: 20px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; text-align: center;">
+                  <p style="margin: 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
+                    💡 <strong>This is just a preview!</strong> Your actual daily briefing will contain real news articles tailored to your interests and delivered at 9:00 AM daily.
                   </p>
                 </div>
                 ` : ''}
             </div>
             
             <!-- Footer -->
-            <div style="background-color: #f8fafc; padding: 30px 40px; text-align: center; border-top: 1px solid #e1e5e9; border-radius: 0 0 8px 8px;">
-                <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">
-                    ${isTest ? `Test email sent to ${userEmail}` : `This briefing was generated for ${userEmail}`}
+            <div style="background-color: #f8fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
+                    ${isTest ? `Test email sent to ${userEmail}` : `Daily briefing for ${userEmail}`}
                 </p>
-                <p style="margin: 0; font-size: 12px; color: #999; font-weight: 500;">
+                <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                     Powered by BlockFeed Daily Briefing
                 </p>
             </div>
@@ -372,14 +365,14 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const gmailEmail = Deno.env.get('GMAIL_EMAIL');
+    const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
 
-    if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY not configured');
+    if (!gmailEmail || !gmailPassword) {
+      throw new Error('Gmail credentials not configured. Please set GMAIL_EMAIL and GMAIL_APP_PASSWORD');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(resendApiKey);
 
     const { email, interests, userId }: BriefingRequest = await req.json();
 
@@ -446,19 +439,31 @@ serve(async (req) => {
     const isTestEmail = !userId;
     const emailHTML = generateEmailHTML(finalArticles, email, isTestEmail);
     
-    const emailResult = await resend.emails.send({
-      from: 'BlockFeed Daily Briefing <noreply@resend.dev>',
-      to: [email],
+    // Setup SMTP client for Gmail
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 587,
+        tls: true,
+        auth: {
+          username: gmailEmail,
+          password: gmailPassword,
+        },
+      },
+    });
+
+    // Send email using Gmail SMTP
+    await client.send({
+      from: gmailEmail,
+      to: email,
       subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
+      content: emailHTML,
       html: emailHTML,
     });
 
-    if (emailResult.error) {
-      console.error('Email sending failed:', emailResult.error);
-      throw new Error(`Email sending failed: ${emailResult.error.message}`);
-    }
+    await client.close();
 
-    console.log('Email sent successfully:', emailResult);
+    console.log('Email sent successfully via Gmail SMTP');
 
     // Update last sent date if userId provided
     if (userId) {
@@ -474,7 +479,6 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      emailId: emailResult.data?.id,
       articlesCount: finalArticles.length 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
