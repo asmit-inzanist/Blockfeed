@@ -167,6 +167,7 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
   };
 
   const handleTestBriefing = async () => {
+    // Validate interests
     if (selectedInterests.length === 0) {
       toast({
         title: "Select Interests",
@@ -176,10 +177,22 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
       return;
     }
 
+    // Validate email presence
     if (!email.trim()) {
       toast({
         title: "Email Required",
-        description: "Please enter your email address to test.",
+        description: "Please enter your email address to receive the test.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      toast({
+        title: "Invalid Email Format",
+        description: "Please enter a valid email address.",
         variant: "destructive"
       });
       return;
@@ -198,31 +211,64 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
         return;
       }
 
-      // Call the send-daily-briefing function directly for testing
+      // Call the send-daily-briefing function for testing (without userId to mark as test)
       const { data, error } = await supabase.functions.invoke('send-daily-briefing', {
         body: {
           email: email.trim(),
-          interests: selectedInterests,
-          userId: user.id
+          interests: selectedInterests
+          // No userId provided to mark as test email
         }
       });
 
       if (error) {
-        throw error;
+        console.error('Test briefing error:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('RESEND_API_KEY')) {
+          toast({
+            title: "Configuration Error",
+            description: "Email service not configured. Please contact support.",
+            variant: "destructive"
+          });
+        } else if (error.message?.includes('No articles found')) {
+          toast({
+            title: "No Content Available",
+            description: "No news articles found for your interests. Please try again later.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Send Failed",
+            description: error.message || "Failed to send test email. Please try again.",
+            variant: "destructive"
+          });
+        }
+        return;
       }
 
+      // Success feedback
       toast({
-        title: "Test Briefing Sent!",
-        description: `Your test briefing with ${data.articlesCount} articles has been sent to ${email}.`,
+        title: "✨ Test Email Sent Successfully!",
+        description: `Your test briefing has been sent to ${email.trim()}. Check your inbox in 1-2 minutes.`,
       });
 
     } catch (error) {
       console.error('Error sending test briefing:', error);
-      toast({
-        title: "Test Failed",
-        description: "Failed to send test briefing. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Network or unexpected errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast({
+          title: "Network Error",
+          description: "Please check your internet connection and try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Unexpected Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setTestLoading(false);
     }
@@ -314,7 +360,7 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
                 {testLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Sending Test...
+                    Sending Test Email...
                   </>
                 ) : (
                   <>
@@ -323,6 +369,12 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
                   </>
                 )}
               </Button>
+            </div>
+
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-xs text-muted-foreground text-center">
+                💡 <strong>Test Email:</strong> Uses sample content to preview your daily briefing format
+              </p>
             </div>
 
             <p className="text-xs text-muted-foreground text-center">
