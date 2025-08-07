@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -438,61 +439,31 @@ serve(async (req) => {
     const isTestEmail = !userId;
     const emailHTML = generateEmailHTML(finalArticles, email, isTestEmail);
     
-    // Send email using fetch to a simple email service
-    const emailPayload = {
-      to: email,
-      from: `"BlockFeed Daily Briefing" <${gmailEmail}>`,
-      subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
-      html: emailHTML
-    };
-
-    // Use a simple nodemailer-like approach with Gmail SMTP
-    const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // Setup SMTP client for Gmail
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 587,
+        tls: true,
+        auth: {
+          username: gmailEmail,
+          password: gmailPassword,
+        },
       },
-      body: JSON.stringify({
-        service_id: 'gmail',
-        template_id: 'template_daily_briefing',
-        user_id: 'your_emailjs_user_id',
-        template_params: {
-          to_email: email,
-          from_name: 'BlockFeed Daily Briefing',
-          message_html: emailHTML,
-          subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`
-        }
-      })
     });
 
-    if (!emailResponse.ok) {
-      // Fallback: Try a simpler approach using Resend with noreply domain
-      const resendApiKey = Deno.env.get('RESEND_API_KEY');
-      if (resendApiKey) {
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'BlockFeed Daily Briefing <noreply@resend.dev>',
-            to: [email],
-            subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
-            html: emailHTML,
-          }),
-        });
+    // Send email using Gmail SMTP
+    await client.send({
+      from: gmailEmail,
+      to: email,
+      subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
+      content: emailHTML,
+      html: emailHTML,
+    });
 
-        if (!resendResponse.ok) {
-          const errorText = await resendResponse.text();
-          throw new Error(`Email sending failed: ${errorText}`);
-        }
-      } else {
-        throw new Error('Email service configuration error');
-      }
-    }
+    await client.close();
 
-    console.log('Email sent successfully');
+    console.log('Email sent successfully via Gmail SMTP');
 
     // Update last sent date if userId provided
     if (userId) {
