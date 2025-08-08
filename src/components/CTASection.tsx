@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Zap } from "lucide-react";
-
 const CTASection = () => {
-  return (
-    <section className="py-20 relative overflow-hidden">
+  return <section className="py-20 relative overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 bg-gradient-primary opacity-10" />
       <div className="absolute inset-0 retro-grid opacity-20" />
@@ -44,9 +42,7 @@ const CTASection = () => {
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             
-            <Button variant="neon" size="xl" className="min-w-[200px]">
-              Watch Demo
-            </Button>
+            
           </div>
 
           {/* Trust indicators */}
@@ -66,8 +62,6 @@ const CTASection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default CTASection;

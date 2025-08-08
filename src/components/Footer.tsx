@@ -1,22 +1,13 @@
 import { Github, Twitter, MessageCircle } from "lucide-react";
 import blockfeedLogo from "@/assets/blockfeed-logo.png";
-
 const Footer = () => {
-  return (
-    <footer className="pixel-border bg-card mt-20">
+  return <footer className="pixel-border bg-card mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="pixel-border bg-gradient-primary p-2 rounded-sm w-12 h-12 flex items-center justify-center">
-                <img 
-                  src={blockfeedLogo} 
-                  alt="BlockFeed Logo" 
-                  className="w-8 h-8"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              </div>
+              
               <div className="font-bold font-mono">
                 <span className="gradient-text text-xl tracking-wide">BLOCK</span>
                 <span className="text-neon-cyan text-xl">FEED</span>
@@ -59,8 +50,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
