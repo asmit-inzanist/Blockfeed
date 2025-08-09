@@ -459,7 +459,7 @@ serve(async (req) => {
     const client = new SMTPClient({
       connection: {
         hostname: "smtp.gmail.com",
-        port: 587,
+        port: 465,
         tls: true,
         auth: {
           username: gmailEmail,
@@ -472,14 +472,14 @@ serve(async (req) => {
       console.log('Attempting to send email via Gmail SMTP...');
       console.log('SMTP Configuration:', {
         hostname: 'smtp.gmail.com',
-        port: 587,
+        port: 465,
         tls: true,
         username: gmailEmail
       });
 
       // Send email using Gmail SMTP (denomailer expects `content` for body)
       await client.send({
-        from: `"BlockFeed Daily Briefing" <${gmailEmail}>`,
+        from: gmailEmail,
         to: email,
         subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
         content: emailHTML

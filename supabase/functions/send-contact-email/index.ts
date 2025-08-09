@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
     const client = new SMTPClient({
       connection: {
         hostname: "smtp.gmail.com",
-        port: 587,
+        port: 465,
         tls: true,
         auth: {
           username: gmailEmail,
@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Send to site owner
       await client.send({
-        from: `"BlockFeed Contact" <${gmailEmail}>`,
+        from: gmailEmail,
         to: "asmitgoswami27@gmail.com",
         subject: `New Contact Form Message from ${name}`,
         content: ownerHtml,
@@ -71,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Send confirmation to user
       await client.send({
-        from: `"BlockFeed" <${gmailEmail}>`,
+        from: gmailEmail,
         to: email,
         subject: "Thank you for contacting BlockFeed!",
         content: userHtml,
