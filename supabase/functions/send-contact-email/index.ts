@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { SMTPClient } from "https://deno.land/x/denomailer/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,13 +21,27 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { name, email, message }: ContactEmailRequest = await req.json();
+    const gmailEmail = Deno.env.get('GMAIL_EMAIL');
+    const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
 
-    // Send email to the creator
-    const emailResponse = await resend.emails.send({
-      from: "BlockFeed Contact <onboarding@resend.dev>",
-      to: ["asmitgoswami27@gmail.com"],
-      subject: `New Contact Form Message from ${name}`,
-      html: `
+    if (!gmailEmail || !gmailPassword) {
+      throw new Error('Gmail credentials not configured. Please set GMAIL_EMAIL and GMAIL_APP_PASSWORD');
+    }
+
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 587,
+        tls: true,
+        auth: {
+          username: gmailEmail,
+          password: gmailPassword,
+        },
+      },
+    });
+
+    // Compose HTML bodies
+    const ownerHtml = `
         <h1>New Contact Form Message</h1>
         <p><strong>From:</strong> ${name} (${email})</p>
         <p><strong>Message:</strong></p>
@@ -37,29 +49,45 @@ const handler = async (req: Request): Promise<Response> => {
           ${message.replace(/\n/g, '<br>')}
         </div>
         <hr>
-        <p><em>This message was sent from the BlockFeed contact form.</em></p>
-      `,
-    });
+        <p><em>This message was sent from the BlockFeed contact form.</em></p>`;
 
-    // Send confirmation email to the user
-    await resend.emails.send({
-      from: "BlockFeed <onboarding@resend.dev>",
-      to: [email],
-      subject: "Thank you for contacting BlockFeed!",
-      html: `
+    const userHtml = `
         <h1>Thank you for contacting us, ${name}!</h1>
         <p>We have received your message and will get back to you as soon as possible.</p>
         <p><strong>Your message:</strong></p>
         <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
           ${message.replace(/\n/g, '<br>')}
         </div>
-        <p>Best regards,<br>The BlockFeed Team</p>
-      `,
-    });
+        <p>Best regards,<br>The BlockFeed Team</p>`;
 
-    console.log("Email sent successfully:", emailResponse);
+    try {
+      // Send to site owner
+      await client.send({
+        from: `"BlockFeed Contact" <${gmailEmail}>`,
+        to: "asmitgoswami27@gmail.com",
+        subject: `New Contact Form Message from ${name}`,
+        html: ownerHtml,
+        content: "text/html",
+      });
 
-    return new Response(JSON.stringify(emailResponse), {
+      // Send confirmation to user
+      await client.send({
+        from: `"BlockFeed" <${gmailEmail}>`,
+        to: email,
+        subject: "Thank you for contacting BlockFeed!",
+        html: userHtml,
+        content: "text/html",
+      });
+
+      await client.close();
+    } catch (emailError) {
+      console.error('SMTP Error (contact email):', emailError);
+      throw new Error(`SMTP Error: ${emailError instanceof Error ? emailError.message : 'Failed to send contact email'}`);
+    }
+
+    console.log("Contact emails sent successfully via Gmail SMTP");
+
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

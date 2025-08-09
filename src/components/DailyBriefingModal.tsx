@@ -223,8 +223,12 @@ const DailyBriefingModal = ({ open, onOpenChange, userEmail }: DailyBriefingModa
       if (error) {
         console.error('Test briefing error:', error);
         
-        // Handle specific error cases
-        if (error.message?.includes('RESEND_API_KEY')) {
+        // Handle specific error cases (SMTP config, content not found)
+        if (
+          error.message?.includes('Gmail credentials not configured') ||
+          error.message?.includes('GMAIL_EMAIL') ||
+          error.message?.includes('GMAIL_APP_PASSWORD')
+        ) {
           toast({
             title: "Configuration Error",
             description: "Email service not configured. Please contact support.",

@@ -362,6 +362,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let requestBody;
+  try {
+    const text = await req.text();
+    console.log('Raw request body:', text);
+    requestBody = JSON.parse(text);
+  } catch (parseError) {
+    console.error('Error parsing request body:', parseError);
+    return new Response(JSON.stringify({
+      error: 'Invalid JSON in request body',
+      details: parseError instanceof Error ? parseError.message : 'Unknown parse error'
+    }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -374,7 +390,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, interests, userId }: BriefingRequest = await req.json();
+    const { email, interests, userId }: BriefingRequest = requestBody;
 
     console.log(`Generating briefing for ${email} with interests:`, interests);
 
@@ -452,16 +468,33 @@ serve(async (req) => {
       },
     });
 
-    // Send email using Gmail SMTP
-    await client.send({
-      from: gmailEmail,
-      to: email,
-      subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
-      content: emailHTML,
-      html: emailHTML,
-    });
+    try {
+      console.log('Attempting to send email via Gmail SMTP...');
+      console.log('SMTP Configuration:', {
+        hostname: 'smtp.gmail.com',
+        port: 587,
+        tls: true,
+        username: gmailEmail
+      });
 
-    await client.close();
+      // Send email using Gmail SMTP
+      await client.send({
+        from: `"BlockFeed Daily Briefing" <${gmailEmail}>`,
+        to: email,
+        subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
+        html: emailHTML
+      });
+
+      await client.close();
+      console.log('Email sent successfully via Gmail SMTP');
+    } catch (emailError) {
+      console.error('SMTP Error Details:', {
+        error: emailError,
+        stack: emailError instanceof Error ? emailError.stack : '',
+        message: emailError instanceof Error ? emailError.message : 'Unknown SMTP error'
+      });
+      throw new Error(`SMTP Error: ${emailError instanceof Error ? emailError.message : 'Failed to send email'}`);
+    }
 
     console.log('Email sent successfully via Gmail SMTP');
 
@@ -485,9 +518,18 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in send-daily-briefing function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('Error in send-daily-briefing function:', {
+      message: errorMessage,
+      stack: errorStack,
+      error: JSON.stringify(error)
+    });
+    
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: errorMessage,
+      details: errorStack,
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
