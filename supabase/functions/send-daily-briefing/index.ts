@@ -477,12 +477,12 @@ serve(async (req) => {
         username: gmailEmail
       });
 
-      // Send email using Gmail SMTP
+      // Send email using Gmail SMTP (denomailer expects `content` for body)
       await client.send({
         from: `"BlockFeed Daily Briefing" <${gmailEmail}>`,
         to: email,
         subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
-        html: emailHTML
+        content: emailHTML
       });
 
       await client.close();

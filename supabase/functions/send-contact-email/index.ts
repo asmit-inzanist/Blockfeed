@@ -66,8 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
         from: `"BlockFeed Contact" <${gmailEmail}>`,
         to: "asmitgoswami27@gmail.com",
         subject: `New Contact Form Message from ${name}`,
-        html: ownerHtml,
-        content: "text/html",
+        content: ownerHtml,
       });
 
       // Send confirmation to user
@@ -75,8 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
         from: `"BlockFeed" <${gmailEmail}>`,
         to: email,
         subject: "Thank you for contacting BlockFeed!",
-        html: userHtml,
-        content: "text/html",
+        content: userHtml,
       });
 
       await client.close();
