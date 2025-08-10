@@ -1,5 +1,12 @@
 import { Article } from './types';
 
+interface RelatedWords {
+  terms: string[];
+  categories: string[];
+  technologies?: string[];
+  concepts?: string[];
+}
+
 interface GeminiConfig {
   temperature?: number;
   maxOutputTokens?: number;
@@ -67,6 +74,56 @@ export async function callGemini(
   throw lastError || new Error('All Gemini models failed');
 }
 
+export async function findRelatedWords(
+  interest: string,
+  apiKey: string
+): Promise<RelatedWords> {
+  if (!apiKey) {
+    throw new Error('Gemini API key is required');
+  }
+
+  const prompt = `You are a knowledge graph expert. For the given interest or topic, generate related terms, categories, technologies, and concepts that would be useful for filtering and finding relevant RSS feeds and news articles.
+
+INTEREST: ${interest}
+
+RESPONSE REQUIRED:
+Return a JSON object with the following structure, including ONLY the most relevant terms (max 10 per category):
+{
+  "terms": ["list", "of", "related", "search", "terms"],
+  "categories": ["relevant", "content", "categories"],
+  "technologies": ["related", "technologies"],
+  "concepts": ["broader", "concepts"]
+}
+
+DO NOT include any other text, only the JSON object.`;
+
+  try {
+    console.log('Requesting related words from Gemini for:', interest);
+    const response = await callGemini(apiKey, prompt, {
+      temperature: 0.7, // Higher temperature for more diverse suggestions
+      maxOutputTokens: 1024
+    });
+
+    // Clean and parse the response
+    const cleanResponse = response
+      .replace(/```json\s*|\s*```/g, '')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .trim();
+
+    const relatedWords = JSON.parse(cleanResponse);
+    
+    if (!relatedWords.terms || !Array.isArray(relatedWords.terms)) {
+      throw new Error('Invalid response format from Gemini');
+    }
+
+    console.log('Found related words:', relatedWords);
+    return relatedWords;
+  } catch (error) {
+    console.error('Error finding related words:', error);
+    throw error;
+  }
+}
+
 export async function scoreArticles(
   articles: Article[],
   interests: string[],
@@ -80,9 +137,41 @@ export async function scoreArticles(
     return articles;
   }
 
-  const prompt = `You are an AI article scorer. Score these articles based on user interests.
+  // First, get related words for each interest
+  const relatedWordsPromises = interests.map(interest => 
+    findRelatedWords(interest, apiKey)
+      .catch(error => {
+        console.error(`Error getting related words for ${interest}:`, error);
+        return null;
+      })
+  );
+
+  const relatedWordsList = await Promise.all(relatedWordsPromises);
+  
+  // Combine all related terms
+  const allTerms = new Set<string>();
+  const allCategories = new Set<string>();
+  const allTechnologies = new Set<string>();
+  const allConcepts = new Set<string>();
+
+  relatedWordsList.forEach(words => {
+    if (words) {
+      words.terms.forEach(term => allTerms.add(term.toLowerCase()));
+      words.categories.forEach(cat => allCategories.add(cat.toLowerCase()));
+      words.technologies?.forEach(tech => allTechnologies.add(tech.toLowerCase()));
+      words.concepts?.forEach(concept => allConcepts.add(concept.toLowerCase()));
+    }
+  });
+
+  const prompt = `You are an AI article scorer. Score these articles based on user interests and related terms.
 
 USER INTERESTS: ${interests.join(', ')}
+
+RELATED TERMS:
+- Search Terms: ${Array.from(allTerms).join(', ')}
+- Categories: ${Array.from(allCategories).join(', ')}
+- Technologies: ${Array.from(allTechnologies).join(', ')}
+- Concepts: ${Array.from(allConcepts).join(', ')}
 
 SCORING RULES:
 - Score 80-100: Article directly matches user interests
