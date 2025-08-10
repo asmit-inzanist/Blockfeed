@@ -32,9 +32,13 @@ interface ActivityData {
 }
 
 const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) => {
-  const currentYear = new Date().getFullYear();
-  const startDate = new Date(currentYear, 0, 1);
-  const endDate = new Date(currentYear, 11, 31);
+  // Detect mobile to render only current month
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  // Range: full year on desktop, current month on mobile
+  const startDate = isMobile ? new Date(currentYear, now.getMonth(), 1) : new Date(currentYear, 0, 1);
+  const endDate = isMobile ? new Date(currentYear, now.getMonth() + 1, 0) : new Date(currentYear, 11, 31);
   // Align weeks to Sunday start and Saturday end to match GitHub-like layout
   const startOfFirstWeek = new Date(startDate);
   startOfFirstWeek.setDate(startOfFirstWeek.getDate() - startOfFirstWeek.getDay()); // back to prior Sunday
@@ -258,10 +262,10 @@ const AccountPage = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <div className="container max-w-7xl mx-auto px-4 py-12 pt-24">
-        <div className="flex gap-8">
+          <div className="container max-w-7xl mx-auto px-4 py-12 pt-24">
+        <div className="flex gap-6 md:gap-8 flex-col md:flex-row">
           {/* Left Sidebar */}
-          <div className="w-64 flex-shrink-0">
+          <div className="w-full md:w-64 flex-shrink-0">
             <Card>
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
@@ -331,45 +335,90 @@ const AccountPage = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {currentArticles.map((article) => (
-                      <div key={article.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h3 className="font-medium mb-2">
-                              <a 
-                                href={article.article_link} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="hover:text-primary transition-colors"
-                              >
-                                {article.article_title}
-                              </a>
-                            </h3>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <>
+                    {/* Mobile grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                      {currentArticles.map((article) => (
+                        <div key={article.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors h-full flex flex-col">
+                          <h3 className="font-medium mb-2">
+                            <a 
+                              href={article.article_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="hover:text-primary transition-colors"
+                            >
+                              {article.article_title}
+                            </a>
+                          </h3>
+                          <div className="mt-auto flex items-center justify-between gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-4">
                               <span>{article.article_source}</span>
                               <span>•</span>
                               <span>{article.article_category}</span>
-                              <span>•</span>
+                            </div>
+                            <div className="flex items-center gap-2">
                               <span>{new Date(article.created_at).toLocaleDateString()}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => 
+                                  activeSection === 'liked' 
+                                    ? removeLikedArticle(article.id)
+                                    : removeSavedArticle(article.id)
+                                }
+                                className="text-destructive hover:text-destructive"
+                              >
+                                Remove
+                              </Button>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => 
-                              activeSection === 'liked' 
-                                ? removeLikedArticle(article.id)
-                                : removeSavedArticle(article.id)
-                            }
-                            className="text-destructive hover:text-destructive"
-                          >
-                            Remove
-                          </Button>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop list (unchanged) */}
+                    <div className="hidden md:block">
+                      <div className="space-y-4">
+                        {currentArticles.map((article) => (
+                          <div key={article.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h3 className="font-medium mb-2">
+                                  <a 
+                                    href={article.article_link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="hover:text-primary transition-colors"
+                                  >
+                                    {article.article_title}
+                                  </a>
+                                </h3>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <span>{article.article_source}</span>
+                                  <span>•</span>
+                                  <span>{article.article_category}</span>
+                                  <span>•</span>
+                                  <span>{new Date(article.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => 
+                                  activeSection === 'liked' 
+                                    ? removeLikedArticle(article.id)
+                                    : removeSavedArticle(article.id)
+                                }
+                                className="text-destructive hover:text-destructive"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
