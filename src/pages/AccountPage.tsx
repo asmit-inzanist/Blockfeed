@@ -62,9 +62,9 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
 
   const getColorClass = (count: number) => {
     if (count === 0) return 'bg-muted';
-    if (count === 1) return 'bg-green-200';
-    if (count === 2) return 'bg-green-400';
-    if (count >= 3) return 'bg-green-600';
+    if (count === 1) return 'bg-gray-300';
+    if (count === 2) return 'bg-gray-500';
+    if (count >= 3) return 'bg-gray-800';
     return 'bg-muted';
   };
 
@@ -125,9 +125,9 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
             <span>Less</span>
             <div className="flex gap-1">
               <div className="w-3 h-3 bg-muted rounded-full"></div>
-              <div className="w-3 h-3 bg-green-200 rounded-full"></div>
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+              <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+              <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-gray-800 rounded-full"></div>
             </div>
             <span>More</span>
           </div>

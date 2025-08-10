@@ -36,9 +36,14 @@ const CTASection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8">
-            <Button variant="cyber" size="xl" className="group min-w-[200px]">
+            <Button
+              variant="cyber"
+              size="xl"
+              className="group min-w-[200px]"
+              onClick={() => (window.location.href = '/todays-feeds')}
+            >
               <Zap className="h-5 w-5 group-hover:animate-pulse" />
-              Get Started Free
+              Get Started for Free
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             
