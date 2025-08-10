@@ -81,7 +81,7 @@ const Header = () => {
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
+            <a href="/features" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
               Features
             </a>
             <a href="/todays-feeds" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">

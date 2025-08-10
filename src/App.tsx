@@ -8,6 +8,7 @@ import TodaysFeeds from "./pages/TodaysFeeds";
 import Auth from "./pages/Auth";
 import AccountPage from "./pages/AccountPage";
 import NotFound from "./pages/NotFound";
+import Features from "./pages/Features";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/todays-feeds" element={<TodaysFeeds />} />
+          <Route path="/features" element={<Features />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/account" element={<AccountPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
