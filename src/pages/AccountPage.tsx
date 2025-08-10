@@ -35,6 +35,9 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   const currentYear = new Date().getFullYear();
   const startDate = new Date(currentYear, 0, 1);
   const endDate = new Date(currentYear, 11, 31);
+  // Align weeks to start on Sunday for consistent columns
+  const startOfFirstWeek = new Date(startDate);
+  startOfFirstWeek.setDate(startOfFirstWeek.getDate() - startOfFirstWeek.getDay());
   
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   // Use full 7-day labels (Sunday-first to match JS Date.getDay())
@@ -46,17 +49,19 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
     activityMap.set(activity.date, activity.count);
   });
 
-  // Generate all days of the year
-  const allDays = [];
+  // Generate all days of the year with normalized week indices
+  const allDays = [] as { date: string; count: number; dayOfWeek: number; weekIndex: number }[];
   const current = new Date(startDate);
   while (current <= endDate) {
     const dateStr = current.toISOString().split('T')[0];
     const count = activityMap.get(dateStr) || 0;
+    const msSinceStartOfWeek0 = current.getTime() - startOfFirstWeek.getTime();
+    const weekIndex = Math.floor(msSinceStartOfWeek0 / (7 * 24 * 60 * 60 * 1000));
     allDays.push({
       date: dateStr,
       count,
       dayOfWeek: current.getDay(),
-      weekOfYear: Math.ceil((current.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+      weekIndex
     });
     current.setDate(current.getDate() + 1);
   }
@@ -97,12 +102,10 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
             </div>
             
             {/* Weeks */}
-            {Array.from({ length: 53 }, (_, weekIndex) => (
+            {Array.from({ length: Math.ceil((endDate.getTime() - startOfFirstWeek.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1 }, (_, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-1">
                 {Array.from({ length: 7 }, (_, dayIndex) => {
-                  const dayData = allDays.find(d => 
-                    d.weekOfYear === weekIndex + 1 && d.dayOfWeek === dayIndex
-                  );
+                  const dayData = allDays.find(d => d.weekIndex === weekIndex && d.dayOfWeek === dayIndex);
                   
                   return (
                     <div
