@@ -106,9 +106,22 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
   // Check entertainment first to avoid sports misclassification
-  if (sourceLower.includes('entertainment') || sourceLower.includes('tmz')) return 'Entertainment'
+  if (
+    sourceLower.includes('entertainment') ||
+    sourceLower.includes('tmz') ||
+    sourceLower.includes('variety') ||
+    (sourceLower.includes('cbs') && sourceLower.includes('entertainment'))
+  ) return 'Entertainment'
   // More specific sports matching
-  if (sourceLower.includes('ndtv sports') || (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))) return 'Sports'
+  if (
+    sourceLower.includes('ndtv sports') ||
+    sourceLower.includes('sky sports') ||
+    sourceLower.includes('sportskeeda') ||
+    sourceLower.includes('sportsweez') ||
+    sourceLower.includes('deadspin') ||
+    sourceLower.includes('fox sports') ||
+    (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))
+  ) return 'Sports'
   if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology'
   if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || sourceLower.includes('marketbeat')) return 'Finance'
   if (sourceLower.includes('politics') || sourceLower.includes('theprint')) return 'Politics'
@@ -137,32 +150,9 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
     return newsItems
   }
   
-  // Strict category filter first; if explicit interests are provided,
-  // only allow exact category matches. Use keyword fallback only when
-  // a category is not present or clearly General.
+  // Strict category filter: only exact category matches are allowed
   const interestsLower = userInterests.map(i => i.toLowerCase())
-
-  return newsItems.filter(item => {
-    const categoryLower = (item.category || '').toLowerCase()
-
-    // Exact category match required when interests are provided
-    const categoryMatch = interestsLower.includes(categoryLower)
-
-    if (categoryMatch) return true
-
-    // Fallback: allow keyword match only when category is 'general' or empty
-    if (!categoryLower || categoryLower === 'general') {
-      const title = (item.title || '').toLowerCase()
-      const description = (item.description || '').toLowerCase()
-      const content = `${title} ${description}`
-      return interestsLower.some(interest => {
-        const keywords = getKeywordsForCategory(interest)
-        return keywords.some(keyword => content.includes(keyword.toLowerCase()))
-      })
-    }
-
-    return false
-  })
+  return newsItems.filter(item => interestsLower.includes((item.category || '').toLowerCase()))
 }
 
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
