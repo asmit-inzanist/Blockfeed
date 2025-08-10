@@ -42,8 +42,8 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   endOfLastWeek.setDate(endOfLastWeek.getDate() + (6 - endOfLastWeek.getDay())); // forward to Saturday
   
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  // Use full 7-day labels (Sunday-first to match JS Date.getDay())
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // Render 7 rows (Sun..Sat) but only show labels for Mon, Wed, Fri like GitHub
+  const dayLabelForIndex = (i: number) => (i === 1 ? 'Mon' : i === 3 ? 'Wed' : i === 5 ? 'Fri' : '');
   
   // Create activity map for quick lookup
   const activityMap = new Map();
@@ -73,28 +73,31 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Month labels aligned by week start */}
-          <div className="flex gap-1 text-xs text-muted-foreground">
-            {Array.from({ length: numWeeks }, (_, weekIndex) => {
-              const weekStart = new Date(startOfFirstWeek.getTime() + weekIndex * weekMs);
-              const label = (weekStart >= startDate && weekStart <= endDate && weekStart.getDate() <= 7)
-                ? months[weekStart.getMonth()] : '';
-              return (
-                <div key={`m-${weekIndex}`} className="w-3 flex-shrink-0 text-center">
-                  {label}
-                </div>
-              );
-            })}
+          {/* Month labels aligned by week start, with left spacer for day labels */}
+          <div className="flex items-start">
+            <div className="w-8 mr-2" />
+            <div className="flex gap-1 text-xs text-muted-foreground">
+              {Array.from({ length: numWeeks }, (_, weekIndex) => {
+                const weekStart = new Date(startOfFirstWeek.getTime() + weekIndex * weekMs);
+                const label = (weekStart >= startDate && weekStart <= endDate && weekStart.getDate() <= 7)
+                  ? months[weekStart.getMonth()] : '';
+                return (
+                  <div key={`m-${weekIndex}`} className="w-3 flex-shrink-0 text-center">
+                    {label}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           
           {/* Contribution grid */}
           <div className="flex gap-1">
-            {/* Day labels */}
-            <div className="flex flex-col gap-1 mr-2">
+            {/* Day labels (Mon, Wed, Fri only) */}
+            <div className="flex flex-col gap-1 mr-2 w-8">
               <div className="h-3"></div> {/* Spacer for month labels */}
-              {days.map((day) => (
-                <div key={day} className="h-3 text-xs text-muted-foreground flex items-center">
-                  {day}
+              {Array.from({ length: 7 }, (_, i) => (
+                <div key={`lbl-${i}`} className="h-3 text-xs text-muted-foreground flex items-center">
+                  {dayLabelForIndex(i)}
                 </div>
               ))}
             </div>
