@@ -37,7 +37,8 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   const endDate = new Date(currentYear, 11, 31);
   
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const days = ['Mon', 'Wed', 'Fri'];
+  // Use full 7-day labels (Sunday-first to match JS Date.getDay())
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   // Create activity map for quick lookup
   const activityMap = new Map();
@@ -88,9 +89,9 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
             {/* Day labels */}
             <div className="flex flex-col gap-1 mr-2">
               <div className="h-3"></div> {/* Spacer for month labels */}
-              {days.map((day, index) => (
+              {days.map((day) => (
                 <div key={day} className="h-3 text-xs text-muted-foreground flex items-center">
-                  {index < 7 && day}
+                  {day}
                 </div>
               ))}
             </div>
@@ -109,7 +110,7 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
                       className={`w-3 h-3 rounded-full ${
                         dayData ? getColorClass(dayData.count) : 'bg-transparent'
                       }`}
-                      title={dayData ? `${dayData.date}: ${dayData.count} contributions` : ''}
+                      title={dayData ? `${dayData.date}: visited` : ''}
                     />
                   );
                 })}
