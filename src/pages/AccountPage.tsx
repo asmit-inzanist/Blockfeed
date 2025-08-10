@@ -61,8 +61,8 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   }
 
   const getColorClass = (count: number) => {
-    // Black for visited, muted for not visited
-    return count > 0 ? 'bg-black' : 'bg-muted';
+    // Dark gray for visited, muted for not visited
+    return count > 0 ? 'bg-gray-700' : 'bg-muted';
   };
 
   const totalDays = activityData.filter(d => d.count > 0).length;
