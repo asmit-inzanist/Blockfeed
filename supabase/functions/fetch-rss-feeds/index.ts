@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 // Tunable limits (override via environment variables MAX_PER_FEED and MAX_RETURNED)
-const MAX_PER_FEED = Number(Deno.env.get('MAX_PER_FEED') ?? '12')
+const MAX_PER_FEED = Number(Deno.env.get('MAX_PER_FEED') ?? '20')
 const MAX_RETURNED = Number(Deno.env.get('MAX_RETURNED') ?? '30')
 
 const RSS_FEEDS = {
