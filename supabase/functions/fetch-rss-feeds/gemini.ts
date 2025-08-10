@@ -82,6 +82,7 @@ export async function findRelatedWords(
   if (!apiKey) {
     throw new Error('Gemini API key is required');
   }
+  console.log('findRelatedWords called for interest:', interest);
 
   const prompt = `You are a news classification expert. For the given custom interest or topic, generate relevant search terms and categories that would help find related news articles from RSS feeds.
 
@@ -148,64 +149,74 @@ export async function scoreArticles(
     return articles;
   }
 
-  // First, get related words for each interest
-  const relatedWordsPromises = interests.map(interest => 
-    findRelatedWords(interest, apiKey)
-      .catch(error => {
-        console.error(`Error getting related words for ${interest}:`, error);
-        return null;
-      })
-  );
+  // Process articles in smaller chunks to avoid token limits
+  const CHUNK_SIZE = 10;
+  const chunks: Article[][] = [];
+  for (let i = 0; i < articles.length; i += CHUNK_SIZE) {
+    chunks.push(articles.slice(i, i + CHUNK_SIZE));
+  }
 
-  const relatedWordsList = await Promise.all(relatedWordsPromises);
+  // Score each chunk separately
+  const allScores: Array<{ title: string; score: number }> = [];
   
-  // Combine all related terms
-  const allTerms = new Set<string>();
-  const allCategories = new Set<string>();
-  const allTechnologies = new Set<string>();
-  const allConcepts = new Set<string>();
-
-  relatedWordsList.forEach(words => {
-    if (words) {
-      words.terms.forEach(term => allTerms.add(term.toLowerCase()));
-      words.categories.forEach(cat => allCategories.add(cat.toLowerCase()));
-      words.technologies?.forEach(tech => allTechnologies.add(tech.toLowerCase()));
-      words.concepts?.forEach(concept => allConcepts.add(concept.toLowerCase()));
-    }
-  });
-
-  const prompt = `You are an AI article scorer. Score these articles based on user interests and related terms.
+  for (const chunk of chunks) {
+    try {
+      const prompt = `You are an AI article scorer. Score these articles based on user interests.
 
 USER INTERESTS: ${interests.join(', ')}
 
-RELATED TERMS:
-- Search Terms: ${Array.from(allTerms).join(', ')}
-- Categories: ${Array.from(allCategories).join(', ')}
-- Technologies: ${Array.from(allTechnologies).join(', ')}
-- Concepts: ${Array.from(allConcepts).join(', ')}
-
 SCORING RULES:
-- Score 80-100: Article directly matches user interests
+- Score 80-100: Article directly matches interests in title/content
 - Score 40-79: Article indirectly relates to interests
 - Score 1-39: Article doesn't match interests
-- Consider: title match, category relevance, content relevance
 
-ARTICLES:
-${articles.map((article, index) => 
-`[Article ${index + 1}]
-Title: "${article.title}"
+ARTICLES TO SCORE:
+${chunk.map((article, index) => 
+`[${index + 1}] "${article.title}"
 Category: ${article.category}
 Description: ${article.description}
 Source: ${article.source}
 `).join('\n\n')}
 
 RESPONSE REQUIRED:
-Return a JSON array containing scores for each article. Each object must have exact article title and score:
-[
-  {"title": "Exact Title Here", "score": 85}
-]
+Return ONLY a JSON array with exact article titles and scores:
+[{"title": "Exact Title Here", "score": 85}]`;
 
-DO NOT include any other text, only the JSON array.`;
+      const response = await callGemini(apiKey, prompt, {
+        temperature: 0.1,
+        maxOutputTokens: 1024
+      });
+
+      // Clean and parse the response
+      const cleanResponse = response
+        .replace(/```json\s*|\s*```/g, '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim();
+
+      const chunkScores = JSON.parse(cleanResponse);
+      if (Array.isArray(chunkScores)) {
+        allScores.push(...chunkScores);
+      }
+    } catch (error) {
+      console.error('Error scoring chunk:', error);
+      // If a chunk fails, give default scores to its articles
+      chunk.forEach(article => {
+        allScores.push({ title: article.title, score: 75 });
+      });
+    }
+  }
+
+  // Apply scores to articles
+  const scoredArticles = articles.map(article => {
+    const score = allScores.find(s => s.title === article.title);
+    return {
+      ...article,
+      ai_score: score ? Math.min(Math.max(score.score, 1), 100) : 75
+    };
+  });
+
+  // Sort by score
+  return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75));
 
   try {
     console.log('Sending article scoring request to Gemini...');

@@ -528,6 +528,7 @@ serve(async (req) => {
 
     // Get the custom interest terms from filtering process
     const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    console.log('Custom interests to process:', customInterests);
     let customTerms = [];
     
     if (customInterests.length > 0) {
