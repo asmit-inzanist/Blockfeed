@@ -35,9 +35,11 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   const currentYear = new Date().getFullYear();
   const startDate = new Date(currentYear, 0, 1);
   const endDate = new Date(currentYear, 11, 31);
-  // Align weeks to start on Sunday for consistent columns
+  // Align weeks to Sunday start and Saturday end to match GitHub-like layout
   const startOfFirstWeek = new Date(startDate);
-  startOfFirstWeek.setDate(startOfFirstWeek.getDate() - startOfFirstWeek.getDay());
+  startOfFirstWeek.setDate(startOfFirstWeek.getDate() - startOfFirstWeek.getDay()); // back to prior Sunday
+  const endOfLastWeek = new Date(endDate);
+  endOfLastWeek.setDate(endOfLastWeek.getDate() + (6 - endOfLastWeek.getDay())); // forward to Saturday
   
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   // Use full 7-day labels (Sunday-first to match JS Date.getDay())
@@ -49,22 +51,11 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
     activityMap.set(activity.date, activity.count);
   });
 
-  // Generate all days of the year with normalized week indices
-  const allDays = [] as { date: string; count: number; dayOfWeek: number; weekIndex: number }[];
-  const current = new Date(startDate);
-  while (current <= endDate) {
-    const dateStr = current.toISOString().split('T')[0];
-    const count = activityMap.get(dateStr) || 0;
-    const msSinceStartOfWeek0 = current.getTime() - startOfFirstWeek.getTime();
-    const weekIndex = Math.floor(msSinceStartOfWeek0 / (7 * 24 * 60 * 60 * 1000));
-    allDays.push({
-      date: dateStr,
-      count,
-      dayOfWeek: current.getDay(),
-      weekIndex
-    });
-    current.setDate(current.getDate() + 1);
-  }
+  // Helper to format yyyy-mm-dd
+  const toDateStr = (d: Date) => d.toISOString().split('T')[0];
+  // Number of weeks to render
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const numWeeks = Math.round((endOfLastWeek.getTime() - startOfFirstWeek.getTime()) / weekMs) + 1;
 
   const getColorClass = (count: number) => {
     // Dark gray for visited, muted for not visited
@@ -82,11 +73,18 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Month labels */}
-          <div className="flex justify-between text-xs text-muted-foreground">
-            {months.map(month => (
-              <span key={month}>{month}</span>
-            ))}
+          {/* Month labels aligned by week start */}
+          <div className="flex gap-1 text-xs text-muted-foreground">
+            {Array.from({ length: numWeeks }, (_, weekIndex) => {
+              const weekStart = new Date(startOfFirstWeek.getTime() + weekIndex * weekMs);
+              const label = (weekStart >= startDate && weekStart <= endDate && weekStart.getDate() <= 7)
+                ? months[weekStart.getMonth()] : '';
+              return (
+                <div key={`m-${weekIndex}`} className="w-3 flex-shrink-0 text-center">
+                  {label}
+                </div>
+              );
+            })}
           </div>
           
           {/* Contribution grid */}
@@ -102,18 +100,18 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
             </div>
             
             {/* Weeks */}
-            {Array.from({ length: Math.ceil((endDate.getTime() - startOfFirstWeek.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1 }, (_, weekIndex) => (
+            {Array.from({ length: numWeeks }, (_, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-1">
                 {Array.from({ length: 7 }, (_, dayIndex) => {
-                  const dayData = allDays.find(d => d.weekIndex === weekIndex && d.dayOfWeek === dayIndex);
-                  
+                  const date = new Date(startOfFirstWeek.getTime() + weekIndex * weekMs + dayIndex * 24 * 60 * 60 * 1000);
+                  const inYear = date >= startDate && date <= endDate;
+                  const dateStr = toDateStr(date);
+                  const count = activityMap.get(dateStr) || 0;
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`w-3 h-3 rounded-full ${
-                        dayData ? getColorClass(dayData.count) : 'bg-transparent'
-                      }`}
-                      title={dayData ? `${dayData.date}: visited` : ''}
+                      className={`w-3 h-3 rounded-full ${inYear ? getColorClass(count) : 'opacity-0'}`}
+                      title={inYear && count > 0 ? `${dateStr}: visited` : ''}
                     />
                   );
                 })}
