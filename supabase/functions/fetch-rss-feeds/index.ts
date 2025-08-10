@@ -132,16 +132,31 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
     return newsItems
   }
   
+  // Strict category filter first; if explicit interests are provided,
+  // only allow exact category matches. Use keyword fallback only when
+  // a category is not present or clearly General.
+  const interestsLower = userInterests.map(i => i.toLowerCase())
+
   return newsItems.filter(item => {
-    const title = item.title.toLowerCase()
-    const description = item.description.toLowerCase()
-    const content = title + " " + description
-    
-    return userInterests.some(interest => {
-      const keywords = getKeywordsForCategory(interest)
-      return keywords.some(keyword => content.includes(keyword.toLowerCase())) ||
-             item.category.toLowerCase().includes(interest.toLowerCase())
-    })
+    const categoryLower = (item.category || '').toLowerCase()
+
+    // Exact category match required when interests are provided
+    const categoryMatch = interestsLower.includes(categoryLower)
+
+    if (categoryMatch) return true
+
+    // Fallback: allow keyword match only when category is 'general' or empty
+    if (!categoryLower || categoryLower === 'general') {
+      const title = (item.title || '').toLowerCase()
+      const description = (item.description || '').toLowerCase()
+      const content = `${title} ${description}`
+      return interestsLower.some(interest => {
+        const keywords = getKeywordsForCategory(interest)
+        return keywords.some(keyword => content.includes(keyword.toLowerCase()))
+      })
+    }
+
+    return false
   })
 }
 
@@ -236,8 +251,10 @@ serve(async (req) => {
       })
     }
 
-    const { categories } = await req.json()
-    const selectedCategories = categories || ['Technology', 'General']
+    const { categories } = await req.json().catch(() => ({ categories: undefined }))
+    const requestedInterests: string[] | undefined = Array.isArray(categories) && categories.length
+      ? categories
+      : undefined
 
     // Fetch all RSS feeds
     const allArticles: Article[] = []
@@ -253,11 +270,12 @@ serve(async (req) => {
       }
     }
 
-    // Get user preferences
+    // Determine which interests to use for filtering
+    // Priority: explicitly requested interests from client > stored user preferences > conservative default
     const { data: { user } } = await supabase.auth.getUser()
-    let userInterests = ['Technology', 'AI']
+    let userInterests = requestedInterests && requestedInterests.length ? requestedInterests : ['World News']
 
-    if (user) {
+    if (!requestedInterests && user) {
       const { data: preferences } = await supabase
         .from('user_preferences')
         .select('interests, custom_interests')
@@ -265,7 +283,8 @@ serve(async (req) => {
         .maybeSingle()
 
       if (preferences) {
-        userInterests = [...(preferences.interests || []), ...(preferences.custom_interests || [])]
+        const combined = [...(preferences.interests || []), ...(preferences.custom_interests || [])]
+        if (combined.length > 0) userInterests = combined
       }
     }
 
