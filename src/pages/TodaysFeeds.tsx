@@ -360,10 +360,10 @@ const TodaysFeeds = () => {
         />
 
         {/* Your Interests Section */}
-        <div className="bg-card border rounded-2xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-card border rounded-2xl p-4 md:p-6 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
             <h2 className="text-lg font-semibold text-card-foreground">Your Interests</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <InterestsSelector 
                 interests={userInterests}
                 onInterestsChange={handleInterestsChange}
@@ -373,6 +373,7 @@ const TodaysFeeds = () => {
                 variant="outline" 
                 size="sm"
                 disabled={loading}
+                className="w-full sm:w-auto"
               >
                 {loading ? 'Updating...' : 'Update Feed'}
               </Button>

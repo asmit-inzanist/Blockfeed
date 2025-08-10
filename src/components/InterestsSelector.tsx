@@ -61,7 +61,7 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
           Edit Interests
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Your Interests</DialogTitle>
         </DialogHeader>
