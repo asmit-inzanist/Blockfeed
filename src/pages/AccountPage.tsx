@@ -32,13 +32,58 @@ interface ActivityData {
 }
 
 const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) => {
-  // Detect mobile to render only current month
-  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+  const [viewMode, setViewMode] = useState<'year' | '6months' | '3months' | 'month'>('year');
+  const [isMobile, setIsMobile] = useState(false);
+  
   const now = new Date();
   const currentYear = now.getFullYear();
-  // Range: full year on desktop, current month on mobile
-  const startDate = isMobile ? new Date(currentYear, now.getMonth(), 1) : new Date(currentYear, 0, 1);
-  const endDate = isMobile ? new Date(currentYear, now.getMonth() + 1, 0) : new Date(currentYear, 11, 31);
+
+  useEffect(() => {
+    const updateViewMode = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 640);
+      if (width < 640) {
+        setViewMode('month');
+      } else if (width < 768) {
+        setViewMode('3months');
+      } else if (width < 1024) {
+        setViewMode('6months');
+      } else {
+        setViewMode('year');
+      }
+    };
+
+    updateViewMode();
+    window.addEventListener('resize', updateViewMode);
+    return () => window.removeEventListener('resize', updateViewMode);
+  }, []);
+
+  const getDateRange = () => {
+    switch (viewMode) {
+      case 'month':
+        return {
+          start: new Date(currentYear, now.getMonth(), 1),
+          end: new Date(currentYear, now.getMonth() + 1, 0)
+        };
+      case '3months':
+        return {
+          start: new Date(currentYear, now.getMonth() - 2, 1),
+          end: new Date(currentYear, now.getMonth() + 1, 0)
+        };
+      case '6months':
+        return {
+          start: new Date(currentYear, now.getMonth() - 5, 1),
+          end: new Date(currentYear, now.getMonth() + 1, 0)
+        };
+      default:
+        return {
+          start: new Date(currentYear, 0, 1),
+          end: new Date(currentYear, 11, 31)
+        };
+    }
+  };
+
+  const { start: startDate, end: endDate } = getDateRange();
   // Align weeks to Sunday start and Saturday end to match GitHub-like layout
   const startOfFirstWeek = new Date(startDate);
   startOfFirstWeek.setDate(startOfFirstWeek.getDate() - startOfFirstWeek.getDay()); // back to prior Sunday
@@ -62,8 +107,10 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   const numWeeks = Math.round((endOfLastWeek.getTime() - startOfFirstWeek.getTime()) / weekMs) + 1;
 
   const getColorClass = (count: number) => {
-    // Dark gray for visited, muted for not visited
-    return count > 0 ? 'bg-gray-700' : 'bg-muted';
+    // Keep using the original two-state color scheme but add hover effects
+    return count > 0 
+      ? 'bg-gray-700 hover:bg-gray-600 transition-colors' 
+      : 'bg-muted hover:bg-muted/80 transition-colors';
   };
 
   const totalDays = activityData.filter(d => d.count > 0).length;
@@ -77,10 +124,46 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Scrollable graph container */}
-          <div className="overflow-x-auto">
-            <div className="min-w-max">
-              {/* Month labels aligned by week start, with left spacer for day labels */}
+          {/* View mode selector for larger screens */}
+          <div className="hidden sm:flex justify-end gap-2 mb-4">
+            <Button
+              variant={viewMode === 'month' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('month')}
+              className="text-xs px-2.5"
+            >
+              Month
+            </Button>
+            <Button
+              variant={viewMode === '3months' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('3months')}
+              className="text-xs px-2.5"
+            >
+              3 Months
+            </Button>
+            <Button
+              variant={viewMode === '6months' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('6months')}
+              className="text-xs px-2.5"
+            >
+              6 Months
+            </Button>
+            <Button
+              variant={viewMode === 'year' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('year')}
+              className="text-xs px-2.5"
+            >
+              Year
+            </Button>
+          </div>
+
+          {/* Graph container */}
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="min-w-max px-4 sm:px-0">
+              {/* Month labels aligned by week start */}
               <div className="flex items-start">
                 <div className="w-6 md:w-8 mr-2" />
                 <div className="flex gap-1 text-xs text-muted-foreground">
@@ -117,11 +200,22 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
                   const inYear = date >= startDate && date <= endDate;
                   const dateStr = toDateStr(date);
                   const count = activityMap.get(dateStr) || 0;
+                  const formattedDate = inYear ? new Date(dateStr).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : '';
+                  
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${inYear ? getColorClass(count) : 'opacity-0'}`}
-                      title={inYear && count > 0 ? `${dateStr}: visited` : ''}
+                      className={`w-2 h-2 md:w-3 md:h-3 rounded-full cursor-pointer
+                        ${inYear ? getColorClass(count) : 'opacity-0'}`}
+                      title={inYear ? `${formattedDate}${count > 0 ? `: ${count} visit${count > 1 ? 's' : ''}` : ''}` : ''}
+                      role="gridcell"
+                      aria-label={inYear ? `${formattedDate}${count > 0 ? `: ${count} visit${count > 1 ? 's' : ''}` : 'No visits'}` : ''}
+                      tabIndex={inYear ? 0 : -1}
                     />
                   );
                 })}
