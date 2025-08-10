@@ -61,11 +61,8 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
   }
 
   const getColorClass = (count: number) => {
-    if (count === 0) return 'bg-muted';
-    if (count === 1) return 'bg-gray-300';
-    if (count === 2) return 'bg-gray-500';
-    if (count >= 3) return 'bg-gray-800';
-    return 'bg-muted';
+    // Black for visited, muted for not visited
+    return count > 0 ? 'bg-black' : 'bg-muted';
   };
 
   const totalDays = activityData.filter(d => d.count > 0).length;
@@ -120,17 +117,7 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
             ))}
           </div>
           
-          {/* Legend */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Less</span>
-            <div className="flex gap-1">
-              <div className="w-3 h-3 bg-muted rounded-full"></div>
-              <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-              <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-gray-800 rounded-full"></div>
-            </div>
-            <span>More</span>
-          </div>
+          
         </div>
       </CardContent>
     </Card>
