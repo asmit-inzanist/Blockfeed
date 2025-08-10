@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Menu, Github, Send } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -168,10 +169,44 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Mobile nav */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <nav className="mt-6 flex flex-col gap-3">
+                  <SheetClose asChild>
+                    <a href="/features" className="text-foreground font-mono uppercase tracking-wide py-2">Features</a>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <a href="/todays-feeds" className="text-foreground font-mono uppercase tracking-wide py-2">Feed</a>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <a href="https://www.linkedin.com/in/asmit-goswami-22b924278/" target="_blank" rel="noreferrer" className="text-foreground font-mono uppercase tracking-wide py-2">Connect</a>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <button className="text-foreground text-left font-mono uppercase tracking-wide py-2" onClick={() => setContactOpen(true)}>Contact</button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <button className="text-foreground text-left font-mono uppercase tracking-wide py-2" onClick={() => window.open('https://github.com/asmit-inzanist/pixel-synth-feed', '_blank')}>GitHub</button>
+                  </SheetClose>
+                  {user ? (
+                    <SheetClose asChild>
+                      <button className="text-foreground text-left font-mono uppercase tracking-wide py-2" onClick={() => (window.location.href = '/account')}>Account</button>
+                    </SheetClose>
+                  ) : (
+                    <SheetClose asChild>
+                      <button className="text-foreground text-left font-mono uppercase tracking-wide py-2" onClick={() => (window.location.href = '/auth')}>Get Started</button>
+                    </SheetClose>
+                  )}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>
