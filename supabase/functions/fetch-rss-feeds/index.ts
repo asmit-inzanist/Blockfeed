@@ -6,10 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Tunable limits (override via environment variables MAX_PER_FEED and MAX_RETURNED)
+const MAX_PER_FEED = Number(Deno.env.get('MAX_PER_FEED') ?? '12')
+const MAX_RETURNED = Number(Deno.env.get('MAX_RETURNED') ?? '30')
+
 const RSS_FEEDS = {
   // Technology
   'TechCrunch': 'https://techcrunch.com/feed/',
   'Gadgets 360': 'https://www.gadgets360.com/rss',
+  'Wired (RSS index)': 'https://www.wired.com/about/rss-feeds/',
+  'ComputerWeekly': 'https://www.computerweekly.com/rss',
+  'MIT News Technology': 'https://news.mit.edu/rss',
   
   // Finance
   'Financial Times': 'https://www.ft.com/?format=rss',
@@ -75,7 +82,7 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
   const itemMatches = xmlText.match(/<item[^>]*>[\s\S]*?<\/item>/gi)
   
   if (itemMatches) {
-    for (const item of itemMatches.slice(0, 8)) { // Limit to 8 articles per feed
+    for (const item of itemMatches.slice(0, MAX_PER_FEED)) { // Limit per feed
       const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
       const descriptionMatch = item.match(/<description[^>]*>([\s\S]*?)<\/description>/i)
       const linkMatch = item.match(/<link[^>]*>([\s\S]*?)<\/link>/i)
@@ -304,7 +311,7 @@ serve(async (req) => {
 
     // Store curated articles for the user if authenticated
     if (user) {
-      const articlesToStore = personalizedArticles.slice(0, 25).map(article => ({
+      const articlesToStore = personalizedArticles.slice(0, MAX_RETURNED).map(article => ({
         user_id: user.id,
         title: article.title,
         description: article.description,
@@ -322,7 +329,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        articles: personalizedArticles.slice(0, 25),
+        articles: personalizedArticles.slice(0, MAX_RETURNED),
         interests: userInterests
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
