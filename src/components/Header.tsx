@@ -84,6 +84,9 @@ const Header = () => {
             <a href="/features" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
               Features
             </a>
+            <a href="https://www.linkedin.com/in/asmit-goswami-22b924278/" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
+              Connect
+            </a>
             <a href="/todays-feeds" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
               Feed
             </a>
@@ -139,7 +142,7 @@ const Header = () => {
 
           {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="font-mono uppercase tracking-wide">
+            <Button variant="ghost" size="sm" className="font-mono uppercase tracking-wide" onClick={() => window.open('https://github.com/asmit-inzanist/pixel-synth-feed', '_blank')}>
               <Github className="w-4 h-4 mr-2" />
               GitHub
             </Button>

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Zap, Gamepad2, Shield, Sparkles, Cpu } from "lucide-react";
+import { Brain, Zap, Gamepad2, Shield, Sparkles, Gauge } from "lucide-react";
 
 const features = [
   {
@@ -33,9 +33,9 @@ const features = [
     color: "text-neon-pink"
   },
   {
-    icon: Cpu,
-    title: "Web3 Ready",
-    description: "Built for the future with decentralized principles and modern architecture.",
+    icon: Gauge,
+    title: "Performance First",
+    description: "Optimized UX with fast loads, smooth interactions, and responsive design across devices.",
     color: "text-pixel-blue"
   }
 ];
