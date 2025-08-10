@@ -73,30 +73,33 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Month labels aligned by week start, with left spacer for day labels */}
-          <div className="flex items-start">
-            <div className="w-8 mr-2" />
-            <div className="flex gap-1 text-xs text-muted-foreground">
-              {Array.from({ length: numWeeks }, (_, weekIndex) => {
-                const weekStart = new Date(startOfFirstWeek.getTime() + weekIndex * weekMs);
-                const label = (weekStart >= startDate && weekStart <= endDate && weekStart.getDate() <= 7)
-                  ? months[weekStart.getMonth()] : '';
-                return (
-                  <div key={`m-${weekIndex}`} className="w-3 flex-shrink-0 text-center">
-                    {label}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {/* Scrollable graph container */}
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              {/* Month labels aligned by week start, with left spacer for day labels */}
+              <div className="flex items-start">
+                <div className="w-6 md:w-8 mr-2" />
+                <div className="flex gap-1 text-xs text-muted-foreground">
+                  {Array.from({ length: numWeeks }, (_, weekIndex) => {
+                    const weekStart = new Date(startOfFirstWeek.getTime() + weekIndex * weekMs);
+                    const label = (weekStart >= startDate && weekStart <= endDate && weekStart.getDate() <= 7)
+                      ? months[weekStart.getMonth()] : '';
+                    return (
+                      <div key={`m-${weekIndex}`} className="w-2 md:w-3 flex-shrink-0 text-center">
+                        {label}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
           
           {/* Contribution grid */}
           <div className="flex gap-1">
             {/* Day labels (Mon, Wed, Fri only) */}
-            <div className="flex flex-col gap-1 mr-2 w-8">
-              <div className="h-3"></div> {/* Spacer for month labels */}
+            <div className="flex flex-col gap-1 mr-2 w-6 md:w-8">
+              <div className="h-2 md:h-3"></div> {/* Spacer for month labels */}
               {Array.from({ length: 7 }, (_, i) => (
-                <div key={`lbl-${i}`} className="h-3 text-xs text-muted-foreground flex items-center">
+                <div key={`lbl-${i}`} className="h-2 md:h-3 text-[10px] md:text-xs text-muted-foreground flex items-center">
                   {dayLabelForIndex(i)}
                 </div>
               ))}
@@ -113,13 +116,15 @@ const ContributionGraph = ({ activityData }: { activityData: ActivityData[] }) =
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`w-3 h-3 rounded-full ${inYear ? getColorClass(count) : 'opacity-0'}`}
+                      className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${inYear ? getColorClass(count) : 'opacity-0'}`}
                       title={inYear && count > 0 ? `${dateStr}: visited` : ''}
                     />
                   );
                 })}
               </div>
             ))}
+            </div>
+          </div>
           </div>
           
           
