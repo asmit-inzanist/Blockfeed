@@ -14,7 +14,12 @@ const RSS_FEEDS = {
   // Technology
   'TechCrunch': 'https://techcrunch.com/feed/',
   'Gadgets 360': 'https://www.gadgets360.com/rss',
-  'Wired (RSS index)': 'https://www.wired.com/about/rss-feeds/',
+  'The Verge': 'https://www.theverge.com/rss/index.xml',
+  'Engadget': 'https://www.engadget.com/rss.xml',
+  'Wired': 'https://www.wired.com/feed/rss',
+  'Ars Technica': 'https://arstechnica.com/feed/',
+  'ZDNet': 'https://www.zdnet.com/news/rss.xml',
+  'VentureBeat': 'https://venturebeat.com/feed/',
   'ComputerWeekly': 'https://www.computerweekly.com/rss',
   'MIT News Technology': 'https://news.mit.edu/rss',
   
@@ -152,74 +157,156 @@ function getKeywordsForCategory(category: string): string[] {
   return keywordMap[category.toLowerCase()] || []
 }
 
+import { removeDuplicateArticles } from './utils'
+
 function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Article[] {
   if (!userInterests || userInterests.length === 0) {
-    return newsItems
+    return removeDuplicateArticles(newsItems)
   }
   
-  // Strict category filter: only exact category matches are allowed
+  // First remove duplicates
+  const uniqueArticles = removeDuplicateArticles(newsItems)
+  
+  // Then filter by interests
   const interestsLower = userInterests.map(i => i.toLowerCase())
-  return newsItems.filter(item => interestsLower.includes((item.category || '').toLowerCase()))
+  return uniqueArticles.filter(item => interestsLower.includes((item.category || '').toLowerCase()))
 }
 
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
   
+  console.log('Debug: Starting personalization')
   console.log('Gemini API key present:', !!geminiApiKey)
+  console.log('Gemini API key length:', geminiApiKey?.length)
   console.log('User interests:', interests)
   console.log('Articles to process:', articles.length)
   
   if (!geminiApiKey) {
-    console.log('No Gemini API key found, returning unpersonalized articles')
+    console.error('Error: GEMINI_API_KEY environment variable is not set')
+    return articles.map(article => ({ ...article }))
+  }
+  
+  if (articles.length === 0) {
+    console.log('Warning: No articles to process')
+    return articles
+  }
+  
+  if (interests.length === 0) {
+    console.log('Warning: No user interests provided')
     return articles.map(article => ({ ...article }))
   }
 
   try {
     console.log('Making Gemini API request...')
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Based on user interests: ${interests.join(', ')}
-            
-            Analyze these news articles and score each from 1-100 based on relevance to the user's interests. Pay special attention to the article titles and descriptions. Higher scores (80-100) for highly relevant content, medium scores (40-79) for somewhat relevant content, and lower scores (1-39) for irrelevant content. Return only a JSON array with title and score for each article:
+    
+    // Prepare the request body with clear structure for reliable scoring
+    const prompt = {
+      contents: [{
+        parts: [{
+          text: `Task: Score news articles based on user interests.
 
-            ${articles.map((article, index) => `${index + 1}. Title: "${article.title}"\nDescription: "${article.description}"\nSource: ${article.source}\nCategory: ${article.category}`).join('\n\n')}
+User Interests: ${interests.join(', ')}
 
-            Return format: [{"title": "exact article title", "score": 85}, ...]`
+Instructions:
+1. Analyze each article's relevance to the user's interests
+2. Score each article from 1-100:
+   - 80-100: Highly relevant (direct match with interests)
+   - 40-79: Somewhat relevant (indirect match or related topics)
+   - 1-39: Not relevant
+3. Consider: title relevance, topic match, and content depth
+4. Return only a JSON array in the format: [{"title": "exact title", "score": number}]
+
+Articles to analyze:
+${articles.map((article, index) => 
+  `Article ${index + 1}:
+   Title: "${article.title}"
+   Description: "${article.description}"
+   Source: ${article.source}
+   Category: ${article.category}`
+).join('\n\n')}
+
+Return strictly JSON array like: [{"title": "First Title", "score": 85}, {"title": "Second Title", "score": 45}]`
           }]
         }],
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
         }
-      })
-    })
+      }
+    
+    console.log('Debug: Sending request to Gemini API...')
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(prompt)
+      }
+    )
 
     console.log('Gemini API response status:', response.status)
+    
+    if (!response.ok) {
+      console.error('Gemini API error:', response.status, response.statusText)
+      const errorText = await response.text()
+      console.error('Gemini API error details:', errorText)
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`)
+    }
+    
     const data = await response.json()
     console.log('Gemini API response data:', JSON.stringify(data, null, 2))
+    
     const geminiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!geminiResponse) {
+      console.error('Error: No text response from Gemini')
+      console.error('Full response:', JSON.stringify(data, null, 2))
+      throw new Error('No text response from Gemini')
+    }
 
-    if (geminiResponse) {
-      try {
-        const scores = JSON.parse(geminiResponse.replace(/```json|```/g, ''))
-        
-        return articles.map(article => {
-          const scoreData = scores.find((s: any) => s.title === article.title)
-          return {
-            ...article,
-            ai_score: scoreData ? Math.min(Math.max(scoreData.score, 1), 100) : 75
-          }
-        }).sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75))
-      } catch (parseError) {
-        console.error('Error parsing Gemini response:', parseError)
-        return articles.map(article => ({ ...article, ai_score: 75 }))
+    try {
+      // Clean up the response and parse JSON
+      const cleanResponse = geminiResponse
+        .replace(/```json\s*|\s*```/g, '') // Remove JSON code blocks
+        .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width spaces
+        .trim()
+      
+      console.log('Cleaned Gemini response:', cleanResponse)
+      
+      const scores = JSON.parse(cleanResponse)
+      
+      if (!Array.isArray(scores)) {
+        throw new Error('Gemini response is not an array')
       }
+      
+      console.log('Successfully parsed scores:', scores)
+      
+      const scoredArticles = articles.map(article => {
+        const scoreData = scores.find((s: any) => s.title === article.title)
+        if (!scoreData) {
+          console.log(`No score found for article: "${article.title}"`)
+        }
+        return {
+          ...article,
+          ai_score: scoreData ? Math.min(Math.max(scoreData.score, 1), 100) : 75
+        }
+      })
+      
+      // Log distribution of scores
+      const scoreDistribution = scoredArticles.reduce((acc: any, article) => {
+        const range = Math.floor(article.ai_score / 10) * 10
+        acc[`${range}-${range + 9}`] = (acc[`${range}-${range + 9}`] || 0) + 1
+        return acc
+      }, {})
+      
+      console.log('Score distribution:', scoreDistribution)
+      
+      return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75))
+    } catch (parseError) {
+      console.error('Error parsing Gemini response:', parseError)
+      console.error('Raw response:', geminiResponse)
+      throw parseError
     }
   } catch (error) {
     console.error('Error calling Gemini API:', error)
