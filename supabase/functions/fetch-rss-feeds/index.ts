@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { findRelatedWords } from './gemini'
+import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
+import { Article, CustomInterestTerm } from './types'
+
+// Disable the no-explicit-any rule for this file as we need to handle unknown response structures
+// deno-lint-ignore-file no-explicit-any
+  interest: string;
+  terms: string[];
+  categories: string[];
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,12 +70,23 @@ const RSS_FEEDS = {
   'The Scientist': 'https://www.the-scientist.com/rss',
   'Science.org (feeds page)': 'https://www.science.org/content/page/email-alerts-and-rss-feeds',
   
+  // Comprehensive General News Sources
+  'Reuters Top News': 'https://www.reutersagency.com/feed/',
+  'Associated Press': 'https://feeds.feedburner.com/associatedpress/news',
+  'The Guardian': 'https://www.theguardian.com/world/rss',
+  'Huffington Post': 'https://www.huffpost.com/section/front-page/feed',
+  'BBC News Home': 'http://feeds.bbci.co.uk/news/rss.xml',
+  'NPR News': 'https://feeds.npr.org/1001/rss.xml',
+  'Washington Post': 'https://feeds.washingtonpost.com/rss/world',
+  'Al Jazeera': 'https://www.aljazeera.com/xml/rss/all.xml',
+  
   // World News
   'BBC World News': 'http://feeds.bbci.co.uk/news/world/rss.xml',
   'NBC News': 'https://feeds.nbcnews.com/nbcnews/public/news',
   'CBS World News': 'https://www.cbsnews.com/world/rss',
   'BBC (All RSS)': 'http://newsrss.bbc.co.uk/rss/',
   'CNN Top Stories': 'https://rss.cnn.com/rss/cnn_topstories.rss',
+  'Reuters World News': 'https://www.reuters.com/world/rss',
   'The New York Times (RSS index)': 'https://www.nytimes.com/rss',
   'Times of India (RSS index)': 'https://timesofindia.indiatimes.com/rss.cms',
   'NDTV (RSS index)': 'https://www.ndtv.com/rss'
@@ -464,7 +485,12 @@ serve(async (req) => {
     }
 
     // Use advanced filtering with keywords
-    const filteredArticles = filterNewsByInterests(allArticles, userInterests)
+    const geminiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiKey) {
+      throw new Error('GEMINI_API_KEY is required for filtering with custom interests');
+    }
+
+    const { filteredArticles, debugInfo } = await filterNewsByInterests(allArticles, userInterests, geminiKey);
 
     console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
     
@@ -500,10 +526,37 @@ serve(async (req) => {
         .upsert(articlesToStore, { onConflict: 'user_id,link' })
     }
 
+    // Get the custom interest terms from filtering process
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    let customTerms = [];
+    
+    if (customInterests.length > 0) {
+      // Get related words for debugging
+      try {
+        const relatedWordsPromises = customInterests.map(interest => 
+          findRelatedWords(interest, getGeminiKey())
+            .catch(error => {
+              console.error(`Error getting related words for ${interest}:`, error);
+              return null;
+            })
+        );
+
+        const relatedWordsList = await Promise.all(relatedWordsPromises);
+        customTerms = customInterests.map((interest, index) => ({
+          interest,
+          terms: relatedWordsList[index]?.terms || [],
+          categories: relatedWordsList[index]?.categories || []
+        })).filter(item => item.terms.length > 0 || item.categories.length > 0);
+      } catch (error) {
+        console.error('Error getting custom interest terms:', error);
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         articles: personalizedArticles.slice(0, MAX_RETURNED),
-        interests: userInterests
+        interests: userInterests,
+        customTerms
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

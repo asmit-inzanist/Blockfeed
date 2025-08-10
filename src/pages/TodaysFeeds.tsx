@@ -70,7 +70,12 @@ const TodaysFeeds = () => {
   const [debugStats, setDebugStats] = useState({
     totalArticles: 0,
     filteredArticles: 0,
-    sampleTitles: [] as string[]
+    sampleTitles: [] as string[],
+    customInterestTerms: [] as Array<{
+      interest: string;
+      terms: string[];
+      categories: string[];
+    }>
   });
   const { toast } = useToast();
 
@@ -80,11 +85,12 @@ const TodaysFeeds = () => {
       const filtered = filterNewsByInterests(allNews, userInterests);
       setFilteredNews(filtered);
       setArticles(filtered);
-      setDebugStats({
+      setDebugStats(prev => ({
+        ...prev,
         totalArticles: allNews.length,
         filteredArticles: filtered.length,
         sampleTitles: filtered.slice(0, 3).map(a => a.title)
-      });
+      }));
     }
   }, [allNews, userInterests]);
 
@@ -160,8 +166,17 @@ const TodaysFeeds = () => {
       if (error) throw error;
 
       const fetchedArticles = data.articles || [];
+      const customTerms = data.customTerms || [];
+      
       setAllNews(fetchedArticles);
       setArticles(fetchedArticles);
+      
+      if (customTerms.length > 0) {
+        setDebugStats(prev => ({
+          ...prev,
+          customInterestTerms: customTerms
+        }));
+      }
     } catch (error) {
       console.error('Error fetching feeds:', error);
       // Fallback mock data matching the design
@@ -368,6 +383,7 @@ const TodaysFeeds = () => {
           userInterests={userInterests}
           sampleTitles={debugStats.sampleTitles}
           loading={loading}
+          customInterestTerms={debugStats.customInterestTerms}
         />
 
         {/* Your Interests Section */}

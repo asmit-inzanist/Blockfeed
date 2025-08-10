@@ -11,6 +11,11 @@ interface DebugPanelProps {
   userInterests: string[];
   sampleTitles: string[];
   loading: boolean;
+  customInterestTerms?: {
+    interest: string;
+    terms: string[];
+    categories: string[];
+  }[];
 }
 
 const DebugPanel: React.FC<DebugPanelProps> = ({
@@ -18,7 +23,8 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   filteredArticles,
   userInterests,
   sampleTitles,
-  loading
+  loading,
+  customInterestTerms = []
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -93,18 +99,44 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
             <div>
               <h4 className="text-sm font-medium mb-2">Filtering Keywords:</h4>
               <div className="space-y-2">
-                {userInterests.map((interest) => {
-                  const keywords = getKeywordsForCategory(interest);
-                  return keywords.length > 0 ? (
-                    <div key={interest} className="text-xs">
-                      <span className="font-medium text-muted-foreground">{interest}:</span>
-                      <span className="ml-2 text-muted-foreground">
-                        {keywords.slice(0, 5).join(', ')}
-                        {keywords.length > 5 && '...'}
+                {/* Show keywords for predefined interests */}
+                {userInterests
+                  .filter(interest => !customInterestTerms?.some(c => c.interest === interest))
+                  .map((interest) => {
+                    const keywords = getKeywordsForCategory(interest);
+                    return keywords.length > 0 ? (
+                      <div key={interest} className="text-xs">
+                        <span className="font-medium text-muted-foreground">{interest}:</span>
+                        <span className="ml-2 text-muted-foreground">
+                          {keywords.slice(0, 5).join(', ')}
+                          {keywords.length > 5 && '...'}
+                        </span>
+                      </div>
+                    ) : null;
+                  })}
+                
+                {/* Show AI-generated terms for custom interests */}
+                {customInterestTerms?.map(({ interest, terms, categories }) => (
+                  <div key={interest} className="space-y-1">
+                    <div className="text-xs">
+                      <span className="font-medium text-purple-600">{interest} (Custom):</span>
+                    </div>
+                    <div className="text-xs pl-4">
+                      <span className="font-medium text-muted-foreground">Search Terms: </span>
+                      <span className="text-muted-foreground">
+                        {terms.slice(0, 5).join(', ')}
+                        {terms.length > 5 && '...'}
                       </span>
                     </div>
-                  ) : null;
-                })}
+                    <div className="text-xs pl-4">
+                      <span className="font-medium text-muted-foreground">Categories: </span>
+                      <span className="text-muted-foreground">
+                        {categories.slice(0, 3).join(', ')}
+                        {categories.length > 3 && '...'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
