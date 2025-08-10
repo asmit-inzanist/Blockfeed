@@ -55,7 +55,15 @@ const TodaysFeeds = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [allNews, setAllNews] = useState<Article[]>([]);
   const [filteredNews, setFilteredNews] = useState<Article[]>([]);
-  const [userInterests, setUserInterests] = useState<string[]>(['Technology']);
+  const [userInterests, setUserInterests] = useState<string[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('bf_user_interests');
+        if (saved) return JSON.parse(saved);
+      }
+    } catch (_) {}
+    return ['Technology'];
+  });
   const [loading, setLoading] = useState(true);
   const [likedArticles, setLikedArticles] = useState<Set<string>>(new Set());
   const [savedArticles, setSavedArticles] = useState<Set<string>>(new Set());
@@ -87,7 +95,8 @@ const TodaysFeeds = () => {
   const loadUserPreferences = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let currentInterests = ['Technology', 'AI']; // default
+      // Start with locally cached interests if available
+      let currentInterests = userInterests && userInterests.length > 0 ? userInterests : ['Technology'];
       
       if (user) {
         // Track user activity when they visit the feed page
@@ -112,6 +121,7 @@ const TodaysFeeds = () => {
           if (allInterests.length > 0) {
             currentInterests = allInterests;
             setUserInterests(allInterests);
+            try { localStorage.setItem('bf_user_interests', JSON.stringify(allInterests)); } catch (_) {}
           }
         }
       }
@@ -181,6 +191,7 @@ const TodaysFeeds = () => {
   const handleInterestsChange = async (newInterests: string[]) => {
     console.log('Updating interests to:', newInterests);
     setUserInterests(newInterests);
+    try { localStorage.setItem('bf_user_interests', JSON.stringify(newInterests)); } catch (_) {}
     
     try {
       // Get current user
@@ -205,7 +216,7 @@ const TodaysFeeds = () => {
       }
       
       // Refetch articles with new interests
-      await fetchFeedsData();
+      await fetchFeedsData(newInterests);
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
