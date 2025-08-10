@@ -117,6 +117,21 @@ const TodaysFeeds = () => {
       }
       
       await fetchFeedsData(currentInterests);
+
+      // Load user's existing liked/saved sets so icons reflect DB state
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) {
+          const [{ data: liked }, { data: saved }] = await Promise.all([
+            supabase.from('liked_articles').select('article_link').eq('user_id', currentUser.id),
+            supabase.from('saved_articles').select('article_link').eq('user_id', currentUser.id)
+          ]);
+          if (liked) setLikedArticles(new Set(liked.map((r: any) => r.article_link)));
+          if (saved) setSavedArticles(new Set(saved.map((r: any) => r.article_link)));
+        }
+      } catch (e) {
+        console.error('Error loading liked/saved sets:', e);
+      }
     } catch (error) {
       console.error('Error loading preferences:', error);
       await fetchFeedsData(['Technology', 'AI']);
@@ -216,32 +231,88 @@ const TodaysFeeds = () => {
     }
   };
 
-  const handleLike = (articleLink: string) => {
-    setLikedArticles(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(articleLink)) {
-        newSet.delete(articleLink);
-        toast({ description: "Removed from liked articles" });
-      } else {
-        newSet.add(articleLink);
-        toast({ description: "Article liked!" });
+  const handleLike = async (articleLink: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ description: 'Please sign in to like articles' });
+        return;
       }
-      return newSet;
-    });
+
+      const isLiked = likedArticles.has(articleLink);
+      if (isLiked) {
+        const { error } = await supabase
+          .from('liked_articles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('article_link', articleLink);
+        if (error) throw error;
+        setLikedArticles(prev => {
+          const s = new Set(prev); s.delete(articleLink); return s;
+        });
+        toast({ description: 'Removed from liked articles' });
+      } else {
+        const article = articles.find(a => a.link === articleLink);
+        if (!article) return;
+        const { error } = await supabase
+          .from('liked_articles')
+          .insert({
+            user_id: user.id,
+            article_title: article.title,
+            article_link: article.link,
+            article_source: article.source,
+            article_category: article.category,
+          });
+        if (error) throw error;
+        setLikedArticles(prev => new Set(prev).add(articleLink));
+        toast({ description: 'Article liked!' });
+      }
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      toast({ description: 'Failed to update like. Please try again.' });
+    }
   };
 
-  const handleSave = (articleLink: string) => {
-    setSavedArticles(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(articleLink)) {
-        newSet.delete(articleLink);
-        toast({ description: "Removed from saved articles" });
-      } else {
-        newSet.add(articleLink);
-        toast({ description: "Article saved!" });
+  const handleSave = async (articleLink: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ description: 'Please sign in to save articles' });
+        return;
       }
-      return newSet;
-    });
+
+      const isSaved = savedArticles.has(articleLink);
+      if (isSaved) {
+        const { error } = await supabase
+          .from('saved_articles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('article_link', articleLink);
+        if (error) throw error;
+        setSavedArticles(prev => {
+          const s = new Set(prev); s.delete(articleLink); return s;
+        });
+        toast({ description: 'Removed from saved articles' });
+      } else {
+        const article = articles.find(a => a.link === articleLink);
+        if (!article) return;
+        const { error } = await supabase
+          .from('saved_articles')
+          .insert({
+            user_id: user.id,
+            article_title: article.title,
+            article_link: article.link,
+            article_source: article.source,
+            article_category: article.category,
+          });
+        if (error) throw error;
+        setSavedArticles(prev => new Set(prev).add(articleLink));
+        toast({ description: 'Article saved!' });
+      }
+    } catch (err) {
+      console.error('Error toggling save:', err);
+      toast({ description: 'Failed to update saved. Please try again.' });
+    }
   };
 
   const handleDismiss = (articleLink: string) => {
