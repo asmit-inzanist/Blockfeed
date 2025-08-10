@@ -283,7 +283,8 @@ const AccountPage = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              {/* Desktop actions (always visible) */}
+              <CardContent className="space-y-2 hidden md:block">
                 <Button
                   variant={activeSection === 'liked' ? 'default' : 'ghost'}
                   className="w-full justify-start"
@@ -310,7 +311,43 @@ const AccountPage = () => {
                   Sign Out
                 </Button>
               </CardContent>
+
+              {/* Mobile actions inside card as collapsible */}
+              <CardContent className="md:hidden">
+                <details>
+                  <summary className="cursor-pointer px-2 py-2 bg-muted/50 rounded text-sm font-medium">Account Menu</summary>
+                  <div className="mt-2 space-y-2">
+                    <Button
+                      variant={activeSection === 'liked' ? 'default' : 'ghost'}
+                      className="w-full justify-start"
+                      onClick={() => setActiveSection('liked')}
+                    >
+                      <Heart className="w-4 h-4 mr-2" />
+                      Liked ({likedArticles.length})
+                    </Button>
+                    <Button
+                      variant={activeSection === 'saved' ? 'default' : 'ghost'}
+                      className="w-full justify-start"
+                      onClick={() => setActiveSection('saved')}
+                    >
+                      <Bookmark className="w-4 h-4 mr-2" />
+                      Saved ({savedArticles.length})
+                    </Button>
+                    <Separator className="my-2" />
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-destructive hover:text-destructive"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </details>
+              </CardContent>
             </Card>
+
+            {/* (Removed separate mobile menu; actions now live inside the card) */}
           </div>
 
           {/* Main Content */}
@@ -337,7 +374,7 @@ const AccountPage = () => {
                 ) : (
                   <>
                     {/* Mobile grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
                       {currentArticles.map((article) => (
                         <div key={article.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors h-full flex flex-col">
                           <h3 className="font-medium mb-2">
@@ -350,14 +387,15 @@ const AccountPage = () => {
                               {article.article_title}
                             </a>
                           </h3>
-                          <div className="mt-auto flex items-center justify-between gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-4">
-                              <span>{article.article_source}</span>
+                          <div className="mt-auto flex flex-col gap-2 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="truncate max-w-[40%]">{article.article_source}</span>
                               <span>•</span>
-                              <span>{article.article_category}</span>
+                              <span className="truncate max-w-[40%]">{article.article_category}</span>
+                              <span>•</span>
+                              <span className="whitespace-nowrap">{new Date(article.created_at).toLocaleDateString()}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span>{new Date(article.created_at).toLocaleDateString()}</span>
+                            <div className="flex justify-end">
                               <Button
                                 variant="ghost"
                                 size="sm"
