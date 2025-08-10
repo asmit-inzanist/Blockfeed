@@ -1,4 +1,5 @@
 import { Article } from './types';
+import { getGeminiKey } from './config';
 
 interface RelatedWords {
   terms: string[];
@@ -82,18 +83,28 @@ export async function findRelatedWords(
     throw new Error('Gemini API key is required');
   }
 
-  const prompt = `You are a knowledge graph expert. For the given interest or topic, generate related terms, categories, technologies, and concepts that would be useful for filtering and finding relevant RSS feeds and news articles.
+  const prompt = `You are a news classification expert. For the given custom interest or topic, generate relevant search terms and categories that would help find related news articles from RSS feeds.
 
 INTEREST: ${interest}
 
+TASK:
+1. Analyze the interest and understand its domain
+2. Generate specific terms that might appear in news articles about this topic
+3. Map it to broader news categories
+4. Include related technical terms if applicable
+
 RESPONSE REQUIRED:
-Return a JSON object with the following structure, including ONLY the most relevant terms (max 10 per category):
+Return a JSON object with these fields (max 15 items per category, ordered by relevance):
 {
-  "terms": ["list", "of", "related", "search", "terms"],
-  "categories": ["relevant", "content", "categories"],
-  "technologies": ["related", "technologies"],
-  "concepts": ["broader", "concepts"]
+  "terms": ["specific words likely to appear in relevant news articles"],
+  "categories": ["matching news categories"],
+  "technologies": ["related technical terms"],
+  "concepts": ["broader topics and themes"]
 }
+
+Make terms specific enough to filter news but broad enough to catch relevant articles.
+Ensure terms are commonly used in news articles.
+Include variations and synonyms.
 
 DO NOT include any other text, only the JSON object.`;
 

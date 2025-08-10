@@ -159,17 +159,77 @@ function getKeywordsForCategory(category: string): string[] {
 
 import { removeDuplicateArticles } from './utils'
 
-function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Article[] {
+const PREDEFINED_INTERESTS = new Set(['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News']);
+
+async function filterNewsByInterests(
+  newsItems: Article[], 
+  userInterests: string[],
+  apiKey: string
+): Promise<Article[]> {
   if (!userInterests || userInterests.length === 0) {
-    return removeDuplicateArticles(newsItems)
+    return removeDuplicateArticles(newsItems);
   }
-  
+
   // First remove duplicates
-  const uniqueArticles = removeDuplicateArticles(newsItems)
+  const uniqueArticles = removeDuplicateArticles(newsItems);
   
-  // Then filter by interests
-  const interestsLower = userInterests.map(i => i.toLowerCase())
-  return uniqueArticles.filter(item => interestsLower.includes((item.category || '').toLowerCase()))
+  // Separate predefined and custom interests
+  const predefinedInterests = userInterests.filter(i => PREDEFINED_INTERESTS.has(i));
+  const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+  
+  // Get related words for custom interests
+  const relatedWordsPromises = customInterests.map(interest => 
+    findRelatedWords(interest, apiKey)
+      .catch(error => {
+        console.error(`Error getting related words for ${interest}:`, error);
+        return null;
+      })
+  );
+
+  const relatedWordsList = await Promise.all(relatedWordsPromises);
+  
+  // Combine all search terms
+  const searchTerms = new Set<string>();
+  const newsCategories = new Set<string>();
+  
+  // Add predefined interests
+  predefinedInterests.forEach(interest => {
+    searchTerms.add(interest.toLowerCase());
+    newsCategories.add(interest.toLowerCase());
+  });
+  
+  // Add related terms from custom interests
+  relatedWordsList.forEach(words => {
+    if (words) {
+      words.terms.forEach(term => searchTerms.add(term.toLowerCase()));
+      words.categories.forEach(cat => newsCategories.add(cat.toLowerCase()));
+      words.technologies?.forEach(tech => searchTerms.add(tech.toLowerCase()));
+      words.concepts?.forEach(concept => searchTerms.add(concept.toLowerCase()));
+    }
+  });
+
+  // Custom interests themselves should be search terms
+  customInterests.forEach(interest => searchTerms.add(interest.toLowerCase()));
+
+  console.log('Filtering with terms:', Array.from(searchTerms));
+  console.log('Matching categories:', Array.from(newsCategories));
+
+  return uniqueArticles.filter(item => {
+    const content = (item.title + " " + item.description).toLowerCase();
+    const category = (item.category || '').toLowerCase();
+    
+    // Match if the article category matches any of our categories
+    const categoryMatch = newsCategories.size === 0 || Array.from(newsCategories).some(cat => 
+      category.includes(cat) || cat.includes(category)
+    );
+
+    // Match if any search term appears in the title or description
+    const contentMatch = Array.from(searchTerms).some(term => 
+      content.includes(term)
+    );
+
+    return categoryMatch || contentMatch;
+  });
 }
 
 import { scoreArticles } from './gemini'
