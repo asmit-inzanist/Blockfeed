@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import nodemailer from "npm:nodemailer@6";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,15 +28,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Gmail credentials not configured. Please set GMAIL_EMAIL and GMAIL_APP_PASSWORD');
     }
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailEmail,
-          password: gmailPassword,
-        },
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: gmailEmail,
+        pass: gmailPassword,
       },
     });
 
@@ -62,22 +60,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       // Send to site owner
-      await client.send({
-        from: gmailEmail,
+      await transporter.sendMail({
+        from: `"BlockFeed Contact" <${gmailEmail}>`,
         to: "asmitgoswami27@gmail.com",
         subject: `New Contact Form Message from ${name}`,
-        content: ownerHtml,
+        html: ownerHtml,
       });
 
       // Send confirmation to user
-      await client.send({
-        from: gmailEmail,
+      await transporter.sendMail({
+        from: `"BlockFeed" <${gmailEmail}>`,
         to: email,
         subject: "Thank you for contacting BlockFeed!",
-        content: userHtml,
+        html: userHtml,
       });
-
-      await client.close();
     } catch (emailError) {
       console.error('SMTP Error (contact email):', emailError);
       throw new Error(`SMTP Error: ${emailError instanceof Error ? emailError.message : 'Failed to send contact email'}`);

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import nodemailer from "npm:nodemailer@6";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -456,37 +456,28 @@ serve(async (req) => {
     const emailHTML = generateEmailHTML(finalArticles, email, isTestEmail);
     
     // Setup SMTP client for Gmail
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailEmail,
-          password: gmailPassword,
-        },
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: gmailEmail,
+        pass: gmailPassword,
       },
     });
 
     try {
-      console.log('Attempting to send email via Gmail SMTP...');
-      console.log('SMTP Configuration:', {
-        hostname: 'smtp.gmail.com',
-        port: 465,
-        tls: true,
-        username: gmailEmail
-      });
+      console.log('Attempting to send email via Gmail SMTP (nodemailer)...');
 
-      // Send email using Gmail SMTP (denomailer expects `content` for body)
-      await client.send({
-        from: gmailEmail,
+      // Send email using Gmail SMTP via nodemailer
+      await transporter.sendMail({
+        from: `"BlockFeed Daily Briefing" <${gmailEmail}>`,
         to: email,
         subject: isTestEmail ? 'Your Daily News Briefing - Test Email' : `Your Daily News Briefing - ${today}`,
-        content: emailHTML
+        html: emailHTML,
       });
 
-      await client.close();
-      console.log('Email sent successfully via Gmail SMTP');
+      console.log('Email sent successfully via Gmail SMTP (nodemailer)');
     } catch (emailError) {
       console.error('SMTP Error Details:', {
         error: emailError,
