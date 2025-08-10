@@ -19,6 +19,11 @@ const RSS_FEEDS = {
   // Sports
   'NDTV Sports': 'https://feeds.feedburner.com/ndtvsports-latest',
   'Times of India Sports': 'https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms',
+  'Sky Sports': 'https://skysports.com/rss/12040',
+  'FOX Sports': 'https://api.foxsports.com/v2/content/feed',
+  'Sportskeeda': 'https://sportskeeda.com/feed',
+  'Deadspin': 'https://deadspin.com/rss',
+  'SportsWeez': 'https://sportsweez.com/feed',
   
   // Politics
   'ThePrint Politics': 'https://theprint.in/category/politics/feed/',
