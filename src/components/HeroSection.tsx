@@ -105,7 +105,7 @@ const HeroSection = () => {
               onClick={handleStartJourney}
             >
               <Sparkles className="h-5 w-5" />
-              Start Your Journey
+              Today's News Feed
             </Button>
             
             <Button 
