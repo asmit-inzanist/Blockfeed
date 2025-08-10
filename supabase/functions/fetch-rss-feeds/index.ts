@@ -172,67 +172,93 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
   return uniqueArticles.filter(item => interestsLower.includes((item.category || '').toLowerCase()))
 }
 
+import { scoreArticles } from './gemini'
+
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
   
-  console.log('Debug: Starting personalization')
-  console.log('Gemini API key present:', !!geminiApiKey)
-  console.log('Gemini API key length:', geminiApiKey?.length)
-  console.log('User interests:', interests)
-  console.log('Articles to process:', articles.length)
-  
   if (!geminiApiKey) {
-    console.error('Error: GEMINI_API_KEY environment variable is not set')
-    return articles.map(article => ({ ...article }))
-  }
-  
-  if (articles.length === 0) {
-    console.log('Warning: No articles to process')
-    return articles
-  }
-  
-  if (interests.length === 0) {
-    console.log('Warning: No user interests provided')
-    return articles.map(article => ({ ...article }))
+    console.error('No Gemini API key found')
+    return articles.map(article => ({ ...article, ai_score: 75 }))
   }
 
   try {
+    return await scoreArticles(articles, interests, geminiApiKey)
+  } catch (error) {
+    console.error('Error personalizing articles:', error)
+    return articles.map(article => ({ ...article, ai_score: 75 }))
+  }
+  
+    if (!geminiApiKey) {
+      console.error('Error: GEMINI_API_KEY environment variable is not set')
+      return articles.map(article => ({ ...article }))
+    }
+    
+    if (articles.length === 0) {
+      console.log('Warning: No articles to process')
+      return articles
+    }
+    
+    if (interests.length === 0) {
+      console.log('Warning: No user interests provided')
+      return articles.map(article => ({ ...article }))
+    }
+
+    // Log the first few articles we're about to process
+    console.log('Sample articles to be scored:', articles.slice(0, 3).map(a => ({
+      title: a.title,
+      category: a.category
+    })))
+    console.log('User interests for scoring:', interests)  try {
     console.log('Making Gemini API request...')
     
-    // Prepare the request body with clear structure for reliable scoring
-    const prompt = {
-      contents: [{
-        parts: [{
-          text: `Task: Score news articles based on user interests.
+    // Try different models if one fails
+    const models = ['gemini-1.5-flash', 'gemini-pro']
+    let response
+    let lastError
+    
+    for (const model of models) {
+      try {
+        console.log(`Trying model: ${model} for article scoring`)
+        
+        const prompt = {
+          contents: [{
+            parts: [{
+              text: `You are an AI article scorer. Your task is to analyze news articles and assign relevance scores based on user interests.
 
-User Interests: ${interests.join(', ')}
+USER INTERESTS: ${interests.join(', ')}
 
-Instructions:
-1. Analyze each article's relevance to the user's interests
-2. Score each article from 1-100:
-   - 80-100: Highly relevant (direct match with interests)
-   - 40-79: Somewhat relevant (indirect match or related topics)
-   - 1-39: Not relevant
-3. Consider: title relevance, topic match, and content depth
-4. Return only a JSON array in the format: [{"title": "exact title", "score": number}]
+SCORING GUIDELINES:
+- Score each article from 1 to 100
+- 80-100: Highly relevant (directly matches user interests)
+- 40-79: Somewhat relevant (indirectly related to interests)
+- 1-39: Not relevant to interests
+- Consider: title relevance, content match, category alignment
 
-Articles to analyze:
+ARTICLES TO SCORE:
 ${articles.map((article, index) => 
-  `Article ${index + 1}:
-   Title: "${article.title}"
-   Description: "${article.description}"
-   Source: ${article.source}
-   Category: ${article.category}`
+  `ARTICLE ${index + 1}
+  TITLE: "${article.title}"
+  CATEGORY: ${article.category}
+  DESCRIPTION: "${article.description}"
+  SOURCE: ${article.source}`
 ).join('\n\n')}
 
-Return strictly JSON array like: [{"title": "First Title", "score": 85}, {"title": "Second Title", "score": 45}]`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        }
-      }
+REQUIRED FORMAT:
+Return only a JSON array with each object having 'title' and 'score' fields. The title must match exactly:
+[
+  {"title": "Exact Article Title", "score": 85},
+  {"title": "Another Article Title", "score": 45}
+]`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 2048,
+              topK: 1,
+              topP: 0.1
+            }
+          }
     
     console.log('Debug: Sending request to Gemini API...')
     const response = await fetch(
