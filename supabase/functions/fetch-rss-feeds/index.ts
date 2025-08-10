@@ -23,6 +23,9 @@ const RSS_FEEDS = {
   // Politics
   'ThePrint Politics': 'https://theprint.in/category/politics/feed/',
   'Times of India Politics': 'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',
+  'Economic Times Politics': 'https://economictimes.indiatimes.com/rss/news/politics',
+  'Fox News Politics': 'https://feeds.foxnews.com/foxnews/politics',
+  'NDTV Politics': 'https://www.ndtv.com/topic/indian-politics/rss',
   
   // Health
   'Medical Xpress': 'https://medicalxpress.com/rss-feed',
@@ -31,14 +34,24 @@ const RSS_FEEDS = {
   // Entertainment
   'Entertainment Tonight': 'https://www.etonline.com/news/rss',
   'TMZ': 'https://www.tmz.com/rss.xml',
+  'CBS News Entertainment': 'https://www.cbsnews.com/entertainment/rss',
+  'Variety': 'https://variety.com/v/rss',
   
   // Science
   'Science Daily': 'https://www.sciencedaily.com/rss/top/science.xml',
   'New Scientist': 'https://www.newscientist.com/feed/home',
+  'The Scientist': 'https://www.the-scientist.com/rss',
+  'Science.org (feeds page)': 'https://www.science.org/content/page/email-alerts-and-rss-feeds',
   
   // World News
   'BBC World News': 'http://feeds.bbci.co.uk/news/world/rss.xml',
-  'NBC News': 'https://feeds.nbcnews.com/nbcnews/public/news'
+  'NBC News': 'https://feeds.nbcnews.com/nbcnews/public/news',
+  'CBS World News': 'https://www.cbsnews.com/world/rss',
+  'BBC (All RSS)': 'http://newsrss.bbc.co.uk/rss/',
+  'CNN Top Stories': 'https://rss.cnn.com/rss/cnn_topstories.rss',
+  'The New York Times (RSS index)': 'https://www.nytimes.com/rss',
+  'Times of India (RSS index)': 'https://timesofindia.indiatimes.com/rss.cms',
+  'NDTV (RSS index)': 'https://www.ndtv.com/rss'
 }
 
 interface Article {
