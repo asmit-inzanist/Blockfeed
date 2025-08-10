@@ -84,8 +84,8 @@ const Header = () => {
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
               Features
             </a>
-            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
-              About
+            <a href="/todays-feeds" className="text-muted-foreground hover:text-foreground transition-colors font-mono uppercase tracking-wide">
+              Feed
             </a>
             <Dialog open={contactOpen} onOpenChange={setContactOpen}>
               <DialogTrigger asChild>
