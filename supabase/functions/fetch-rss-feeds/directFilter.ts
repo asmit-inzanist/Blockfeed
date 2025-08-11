@@ -300,6 +300,13 @@ export async function filterArticlesForCustomInterest(
     console.log('AI generated keywords:', keywordData.source.ai);
   }
 
+  // Log the expanded keywords for debugging
+  console.log('Expanded keywords for interest:', interest, {
+    predefined: keywordData.source.predefined,
+    ai: keywordData.source.ai,
+    totalKeywords: keywordData.keywords.length
+  });
+
   // Add debug information to each article
   const articlesWithDebug = filteredArticles.map(article => ({
     ...article,
@@ -309,7 +316,7 @@ export async function filterArticlesForCustomInterest(
       interest,
       totalKeywords: keywordData.keywords.length,
       keywordsUsed: keywordData.keywords.filter(k => 
-        (article.title + article.description).toLowerCase().includes(k.toLowerCase())
+        (article.title + ' ' + (article.description || '')).toLowerCase().includes(k.toLowerCase())
       )
     }
   }));

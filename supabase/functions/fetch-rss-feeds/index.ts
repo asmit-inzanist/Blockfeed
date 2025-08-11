@@ -2,7 +2,30 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
 import { Article } from './types'
-import { filterArticlesForCustomInterest, getExpandedKeywords } from './directFilter'
+import { filterArticlesForCustomInterest, getExp    // Get custom interests and their keywords
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    let filteringKeywords = [];
+
+    if (customInterests.length > 0) {
+      try {
+        // Get keywords for each custom interest
+        const keywordPromises = customInterests.map(interest => getExpandedKeywords(interest));
+        const keywordResults = await Promise.all(keywordPromises);
+        
+        // Combine keywords from all interests
+        filteringKeywords = keywordResults.flatMap(result => result.keywords);
+        
+        // Log for debugging
+        console.log('Filtering keywords:', {
+          interests: customInterests,
+          keywords: filteringKeywords
+        });
+      } catch (error) {
+        console.error('Error getting keywords:', error);
+      }
+    }
+
+    // Use direct filtering approachfrom './directFilter'
 import { removeDuplicateArticles } from './utils'
 import { scoreArticles } from './gemini'
 
@@ -335,6 +358,25 @@ serve(async (req) => {
 
     const debugInfo = filteredArticles.length > 0 ? (filteredArticles[0] as any).debug || null : null;
 
+    // Get filtering keywords from filtered articles
+    const keywords = filteredArticles
+      .filter(article => (article as any).debug?.keywords)
+      .map(article => (article as any).debug.keywords)
+      .flat();
+
+    // Get keyword sources if available
+    const keywordSources = filteredArticles
+      .filter(article => (article as any).debug?.keywordSource)
+      .map(article => (article as any).debug.keywordSource);
+
+    // Log debug info
+    console.log('Debug info:', {
+      filteredCount: filteredArticles.length,
+      hasKeywords: keywords.length > 0,
+      keywordCount: keywords.length,
+      sampleKeywords: keywords.slice(0, 10)
+    });
+
     return new Response(
       JSON.stringify({ 
         articles: personalizedArticles.slice(0, MAX_RETURNED),
@@ -346,8 +388,8 @@ serve(async (req) => {
           matchRate: filteredArticles.length > 0 
             ? Math.round((filteredArticles.length / allArticles.length) * 100)
             : 0,
-          keywords: debugInfo?.keywords || [],
-          keywordSource: debugInfo?.keywordSource || null
+          filteringKeywords: Array.from(new Set(keywords)), // Remove duplicates
+          keywordSources: keywordSources.length > 0 ? keywordSources[0] : null
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
