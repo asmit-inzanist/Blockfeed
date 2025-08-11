@@ -84,15 +84,36 @@ export async function findRelatedWords(
   }
   console.log('findRelatedWords called for interest:', interest);
 
-  const prompt = `Generate a JSON object of search terms for finding news articles about: ${interest}
+  const prompt = `Generate comprehensive search terms for finding news articles about: "${interest}"
 
-The response must be a clean JSON object like this, no other text:
+You must return a JSON object with these fields:
 {
-  "terms": ["5-10 specific keywords that appear in news articles"],
-  "categories": ["2-3 broad news categories"],
-  "technologies": ["3-5 related technical terms"],
-  "concepts": ["2-3 broader themes"]
-}`;
+  "terms": [
+    // 10-15 specific words or phrases that would appear in news article titles/content
+    // Include common variations and related terms
+    // Example: for "cybersecurity" include "cyber attack", "data breach", "hacking", etc.
+  ],
+  "categories": [
+    // 3-5 broad news categories this topic falls under
+    // Example: for "cybersecurity" include "Technology", "Security", "Crime"
+  ],
+  "technologies": [
+    // 5-8 specific technical terms related to the topic
+    // Example: for "cybersecurity" include "malware", "firewall", "encryption", etc.
+  ],
+  "concepts": [
+    // 3-5 broader themes or concepts
+    // Example: for "cybersecurity" include "digital security", "online privacy", etc.
+  ]
+}
+
+Important:
+- Include exact phrases journalists would use in headlines
+- Include both technical and non-technical terms
+- Include current trending terms in this field
+- Make terms specific enough to be meaningful but not too narrow
+
+Return ONLY the JSON object, no other text.`;
 
   try {
     console.log('Requesting related words from Gemini for:', interest);
