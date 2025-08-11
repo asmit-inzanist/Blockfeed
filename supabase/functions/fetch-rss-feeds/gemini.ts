@@ -1,6 +1,21 @@
 import { Article } from './types';
 import { getGeminiKey } from './config';
 
+function sanitizeText(text: string): string {
+  // Replace HTML entities with their actual characters
+  return text
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8230;/g, '...')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 interface RelatedWords {
   terms: string[];
   categories: string[];
@@ -167,13 +182,28 @@ export async function scoreArticles(
   
   for (const chunk of chunks) {
     try {
-      const prompt = `You are an article scorer. Generate a JSON array of scores for articles based on relevance to: ${interests.join(', ')}.
+      function sanitizeText(text: string): string {
+    // Replace HTML entities with their actual characters
+    return text
+      .replace(/&#8217;/g, "'")
+      .replace(/&#8216;/g, "'")
+      .replace(/&#8220;/g, '"')
+      .replace(/&#8221;/g, '"')
+      .replace(/&#8230;/g, '...')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  }
+
+  const prompt = `You are an article scorer. Generate a JSON array of scores for articles based on relevance to: ${interests.join(', ')}.
 
 Score 80-100 for direct matches, 40-79 for indirect matches, 1-39 for unrelated.
 
 Articles:
 ${chunk.map((article, index) => 
-`${index + 1}. "${article.title}" (${article.category})`).join('\n')}
+`${index + 1}. "${sanitizeText(article.title)}" (${article.category})`).join('\n')}
 
 Return only a JSON array like this, no other text:
 [
@@ -233,65 +263,13 @@ Return only a JSON array like this, no other text:
 
   // Apply scores to articles
   const scoredArticles = articles.map(article => {
-    const score = allScores.find(s => s.title === article.title);
+    const score = allScores.find(s => sanitizeText(s.title) === sanitizeText(article.title));
     return {
       ...article,
       ai_score: score ? Math.min(Math.max(score.score, 1), 100) : 75
     };
   });
 
-  // Sort by score
+  // Sort by score and return
   return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75));
-
-  try {
-    console.log('Sending article scoring request to Gemini...');
-    const response = await callGemini(apiKey, prompt, {
-      temperature: 0.1,
-      maxOutputTokens: 2048
-    });
-
-    console.log('Raw Gemini response:', response);
-
-    // Clean the response text
-    const cleanResponse = response
-      .replace(/```json\s*|\s*```/g, '')
-      .replace(/[\u200B-\u200D\uFEFF]/g, '')
-      .trim();
-
-    console.log('Cleaned response:', cleanResponse);
-
-    const scores = JSON.parse(cleanResponse);
-    
-    if (!Array.isArray(scores)) {
-      throw new Error('Gemini did not return an array of scores');
-    }
-
-    console.log('Parsed scores:', scores.slice(0, 3));
-
-    // Apply scores to articles
-    const scoredArticles = articles.map(article => {
-      const score = scores.find(s => s.title === article.title);
-      if (!score) {
-        console.log(`No score found for article: ${article.title}`);
-      }
-      return {
-        ...article,
-        ai_score: score ? Math.min(Math.max(score.score, 1), 100) : 75
-      };
-    });
-
-    // Log score distribution
-    const distribution = scoredArticles.reduce((acc: Record<string, number>, article) => {
-      const range = Math.floor(article.ai_score / 10) * 10;
-      acc[`${range}-${range+9}`] = (acc[`${range}-${range+9}`] || 0) + 1;
-      return acc;
-    }, {});
-
-    console.log('Score distribution:', distribution);
-
-    return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75));
-  } catch (error) {
-    console.error('Error scoring articles:', error);
-    throw error;
-  }
 }
