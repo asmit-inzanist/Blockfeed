@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
+import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config'
 import { Article } from './types'
 import { filterArticlesForCustomInterest, getExp    // Get custom interests and their keywords
     const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
@@ -39,75 +39,76 @@ const MAX_PER_FEED = Number(Deno.env.get('MAX_PER_FEED') ?? '20')
 const MAX_RETURNED = Number(Deno.env.get('MAX_RETURNED') ?? '30')
 
 const RSS_FEEDS = {
-  // Technology
+  // Technology & General Tech
   'TechCrunch': 'https://techcrunch.com/feed/',
-  'Gadgets 360': 'https://www.gadgets360.com/rss',
   'The Verge': 'https://www.theverge.com/rss/index.xml',
-  'Engadget': 'https://www.engadget.com/rss.xml',
   'Wired': 'https://www.wired.com/feed/rss',
   'Ars Technica': 'https://arstechnica.com/feed/',
   'ZDNet': 'https://www.zdnet.com/news/rss.xml',
   'VentureBeat': 'https://venturebeat.com/feed/',
-  'ComputerWeekly': 'https://www.computerweekly.com/rss',
-  'MIT News Technology': 'https://news.mit.edu/rss',
+  'MIT Technology Review': 'https://www.technologyreview.com/feed/',
+  'Digital Trends': 'https://www.digitaltrends.com/feed/',
   
-  // Finance
+  // AI & ML
+  'AI News': 'https://artificialintelligence-news.com/feed/',
+  'Google AI Blog': 'http://feeds.feedburner.com/blogspot/gJZg',
+  'OpenAI Blog': 'https://openai.com/blog/rss/',
+  'DeepMind Blog': 'https://deepmind.com/blog/feed/basic/',
+  'Machine Learning Mastery': 'https://machinelearningmastery.com/feed/',
+  
+  // Finance & Business
   'Financial Times': 'https://www.ft.com/?format=rss',
-  'Benzinga': 'https://feeds.benzinga.com/benzinga',
-  'MarketBeat': 'https://marketbeat.com/feed',
+  'Bloomberg': 'https://www.bloomberg.com/feeds/technology.rss',
+  'Business Insider': 'https://www.businessinsider.com/rss',
+  'CNBC Tech': 'https://www.cnbc.com/id/19854910/device/rss/rss.html',
+  'Forbes Tech': 'https://www.forbes.com/technology/feed/',
+  'MarketWatch': 'https://feeds.marketwatch.com/marketwatch/topstories/',
   
-  // Sports
-  'NDTV Sports': 'https://feeds.feedburner.com/ndtvsports-latest',
-  'Times of India Sports': 'https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms',
-  'Sky Sports': 'https://skysports.com/rss/12040',
-  'FOX Sports': 'https://api.foxsports.com/v2/content/feed',
-  'Sportskeeda': 'https://sportskeeda.com/feed',
-  'Deadspin': 'https://deadspin.com/rss',
-  'SportsWeez': 'https://sportsweez.com/feed',
+  // Startups
+  'StartupWorld': 'https://startupworld.com/feed/',
+  'EU-Startups': 'https://www.eu-startups.com/feed/',
+  'YCombinator Blog': 'https://blog.ycombinator.com/feed/',
+  'Indie Hackers': 'https://www.indiehackers.com/feed.xml',
+  'Startup Daily': 'https://www.startupdaily.net/feed/',
   
-  // Politics
-  'ThePrint Politics': 'https://theprint.in/category/politics/feed/',
-  'Times of India Politics': 'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',
-  'Economic Times Politics': 'https://economictimes.indiatimes.com/rss/news/politics',
-  'Fox News Politics': 'https://feeds.foxnews.com/foxnews/politics',
-  'NDTV Politics': 'https://www.ndtv.com/topic/indian-politics/rss',
+  // Gaming
+  'Polygon': 'https://www.polygon.com/rss/index.xml',
+  'IGN': 'https://www.ign.com/rss/articles/feed',
+  'GameSpot': 'https://www.gamespot.com/feeds/game-news',
+  'Eurogamer': 'https://www.eurogamer.net/feed',
+  'PC Gamer': 'https://www.pcgamer.com/rss/',
   
-  // Health
-  'Medical Xpress': 'https://medicalxpress.com/rss-feed',
-  'MedlinePlus': 'https://medlineplus.gov/feeds/news_en.xml',
+  // Cybersecurity
+  'Krebs on Security': 'https://krebsonsecurity.com/feed/',
+  'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
+  'Threatpost': 'https://threatpost.com/feed/',
+  'Dark Reading': 'https://www.darkreading.com/rss.xml',
+  'Security Week': 'https://feeds.feedburner.com/securityweek',
   
-  // Entertainment
-  'Entertainment Tonight': 'https://www.etonline.com/news/rss',
-  'TMZ': 'https://www.tmz.com/rss.xml',
-  'CBS News Entertainment': 'https://www.cbsnews.com/entertainment/rss',
-  'Variety': 'https://variety.com/v/rss',
+  // Science & Research
+  'Science Daily': 'https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml',
+  'Nature': 'https://www.nature.com/nature.rss',
+  'New Scientist Tech': 'https://www.newscientist.com/subject/technology/feed/',
+  'IEEE Spectrum': 'https://spectrum.ieee.org/feeds/feed.rss',
+  'ACM TechNews': 'https://technews.acm.org/feed/',
   
-  // Science
-  'Science Daily': 'https://www.sciencedaily.com/rss/top/science.xml',
-  'New Scientist': 'https://www.newscientist.com/feed/home',
-  'The Scientist': 'https://www.the-scientist.com/rss',
-  'Science.org (feeds page)': 'https://www.science.org/content/page/email-alerts-and-rss-feeds',
+  // Business Tech
+  'CIO': 'https://www.cio.com/index.rss',
+  'Information Week': 'https://www.informationweek.com/rss_simple.asp',
+  'eWeek': 'https://www.eweek.com/feed/',
+  'Computer World': 'https://www.computerworld.com/index.rss',
+  'InfoWorld': 'https://www.infoworld.com/index.rss',
   
-  // Comprehensive General News Sources
-  'Reuters Top News': 'https://www.reutersagency.com/feed/',
-  'Associated Press': 'https://feeds.feedburner.com/associatedpress/news',
-  'The Guardian': 'https://www.theguardian.com/world/rss',
-  'Huffington Post': 'https://www.huffpost.com/section/front-page/feed',
-  'BBC News Home': 'http://feeds.bbci.co.uk/news/rss.xml',
-  'NPR News': 'https://feeds.npr.org/1001/rss.xml',
-  'Washington Post': 'https://feeds.washingtonpost.com/rss/world',
-  'Al Jazeera': 'https://www.aljazeera.com/xml/rss/all.xml',
+  // Health Tech
+  'Digital Health': 'https://www.digitalhealth.net/feed/',
+  'Health IT News': 'https://www.healthcareitnews.com/feed/',
+  'MobiHealth News': 'https://www.mobihealthnews.com/feed/',
+  'Medical Futurist': 'https://medicalfuturist.com/feed/',
   
-  // World News
-  'BBC World News': 'http://feeds.bbci.co.uk/news/world/rss.xml',
-  'NBC News': 'https://feeds.nbcnews.com/nbcnews/public/news',
-  'CBS World News': 'https://www.cbsnews.com/world/rss',
-  'BBC (All RSS)': 'http://newsrss.bbc.co.uk/rss/',
-  'CNN Top Stories': 'https://rss.cnn.com/rss/cnn_topstories.rss',
-  'Reuters World News': 'https://www.reuters.com/world/rss',
-  'The New York Times (RSS index)': 'https://www.nytimes.com/rss',
-  'Times of India (RSS index)': 'https://timesofindia.indiatimes.com/rss.cms',
-  'NDTV (RSS index)': 'https://www.ndtv.com/rss'
+  // Sports Tech
+  'SportTechie': 'https://www.sporttechie.com/feed/',
+  'Sports Technology Blog': 'https://www.sportstechnologyblog.com/feed/',
+  'Stack Sports': 'https://www.stack.com/feed/'
 }
 
 function parseRSSFeed(xmlText: string, source: string): Article[] {
@@ -187,7 +188,7 @@ function getKeywordsForCategory(category: string): string[] {
   return keywordMap[category.toLowerCase()] || []
 }
 
-async function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Promise<Article[]> {
+function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Article[] {
   if (!userInterests || userInterests.length === 0) {
     return removeDuplicateArticles(newsItems);
   }
@@ -195,43 +196,37 @@ async function filterNewsByInterests(newsItems: Article[], userInterests: string
   // First remove duplicates
   const uniqueArticles = removeDuplicateArticles(newsItems);
   
-  // Separate predefined and custom interests
-  const predefinedInterests = userInterests.filter(i => PREDEFINED_INTERESTS.has(i));
-  const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
-  
-  // Handle predefined interests with the existing approach
-  const searchTerms = new Set<string>();
-  const newsCategories = new Set<string>();
-  
-  predefinedInterests.forEach(interest => {
-    searchTerms.add(interest.toLowerCase());
-    newsCategories.add(interest.toLowerCase());
+  // Get all relevant keywords for the selected interests
+  const keywordSets = userInterests.map(interest => {
+    const keywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || [];
+    return new Set(keywords.map(k => k.toLowerCase()));
   });
 
-  // Filter articles for predefined interests
-  const predefinedMatches = uniqueArticles.filter(item => {
-    const content = (item.title + " " + item.description).toLowerCase();
-    const category = (item.category || '').toLowerCase();
+  // Filter articles based on keyword matches
+  const filteredArticles = uniqueArticles.filter(article => {
+    const content = (article.title + " " + article.description).toLowerCase();
     
-    const categoryMatch = Array.from(newsCategories).some(cat => 
-      category.includes(cat) || cat.includes(category)
+    // Check if the article matches keywords from any selected interest
+    return keywordSets.some(keywords => 
+      Array.from(keywords).some(keyword => content.includes(keyword))
     );
-    const contentMatch = Array.from(searchTerms).some(term => 
-      content.includes(term)
-    );
-
-    return categoryMatch || contentMatch;
   });
 
-  // Handle custom interests with the direct filtering approach
-  let customMatches: Article[] = [];
-  for (const interest of customInterests) {
-    const relevantArticles = await filterArticlesForCustomInterest(uniqueArticles, interest);
-    customMatches = [...customMatches, ...relevantArticles];
-  }
+  // Add debug information
+  const allKeywords = Array.from(new Set(
+    userInterests.flatMap(interest => 
+      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
+    )
+  ));
 
-  // Combine and deduplicate results
-  return removeDuplicateArticles([...predefinedMatches, ...customMatches]);
+  console.log('Filtering info:', {
+    interests: userInterests,
+    keywordCount: allKeywords.length,
+    matchedArticles: filteredArticles.length,
+    totalArticles: uniqueArticles.length
+  });
+
+  return filteredArticles;
 }
 
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
@@ -377,6 +372,11 @@ serve(async (req) => {
       sampleKeywords: keywords.slice(0, 10)
     });
 
+    // Get keywords used for filtering
+    const filteringKeywords = userInterests.flatMap(interest => 
+      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
+    );
+
     return new Response(
       JSON.stringify({ 
         articles: personalizedArticles.slice(0, MAX_RETURNED),
@@ -388,8 +388,7 @@ serve(async (req) => {
           matchRate: filteredArticles.length > 0 
             ? Math.round((filteredArticles.length / allArticles.length) * 100)
             : 0,
-          filteringKeywords: Array.from(new Set(keywords)), // Remove duplicates
-          keywordSources: keywordSources.length > 0 ? keywordSources[0] : null
+          filteringKeywords: Array.from(new Set(filteringKeywords))
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
