@@ -126,6 +126,14 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
   
+  // Health category check moved to top priority
+  if (sourceLower.includes('medical') || 
+      sourceLower.includes('health') || 
+      sourceLower.includes('healthcare') ||
+      sourceLower.includes('doctor') ||
+      sourceLower.includes('hospital') ||
+      sourceLower.includes('clinic')) return 'Health'
+  
   if (sourceLower.includes('ai') || sourceLower.includes('artificial intelligence') || 
       sourceLower.includes('machine learning') || sourceLower.includes('deepmind')) return 'AI & ML'
   
@@ -140,11 +148,12 @@ function getCategoryFromSource(source: string): string {
   
   if (sourceLower.includes('cio') || sourceLower.includes('enterprise') || 
       sourceLower.includes('infoworld') || sourceLower.includes('eweek')) return 'Business Tech'
+  
   if (sourceLower.includes('entertainment') || sourceLower.includes('tmz') || 
       sourceLower.includes('variety')) return 'Entertainment'
   
   if (sourceLower.includes('ndtv sports') || sourceLower.includes('sky sports') || 
-      sourceLower.includes('sports') && !sourceLower.includes('entertainment')) return 'Sports'
+      (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))) return 'Sports'
   
   if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology'
   
@@ -152,8 +161,6 @@ function getCategoryFromSource(source: string): string {
       sourceLower.includes('marketbeat')) return 'Finance'
   
   if (sourceLower.includes('politics') || sourceLower.includes('theprint')) return 'Politics'
-  
-  if (sourceLower.includes('medical') || sourceLower.includes('health')) return 'Health'
   
   if (sourceLower.includes('science')) return 'Science'
   
@@ -217,14 +224,31 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
     const content = (article.title + " " + article.description).toLowerCase();
     const category = article.category.toLowerCase();
     
-    // Check if article matches any keywords or belongs to mapped category
-    return keywordSets.some(keywords => 
-      Array.from(keywords).some(keyword => 
+    // Debug log for article processing
+    console.log(`Processing article: "${article.title}" (Category: ${category})`);
+    
+    // Check category match first
+    const categoryMatch = processedInterests.some(interest => {
+      const match = category.toLowerCase() === interest.toLowerCase();
+      if (match) console.log(`Category match found: ${category} matches interest ${interest}`);
+      return match;
+    });
+    
+    if (categoryMatch) return true;
+    
+    // Check keyword matches
+    const keywordMatch = keywordSets.some(keywords => {
+      const matchingKeyword = Array.from(keywords).find(keyword => 
         content.includes(keyword) || category.includes(keyword)
-      )
-    ) || processedInterests.some(interest => 
-      category.toLowerCase() === interest.toLowerCase()
-    );
+      );
+      if (matchingKeyword) {
+        console.log(`Keyword match found: "${matchingKeyword}" in article`);
+        return true;
+      }
+      return false;
+    });
+    
+    return categoryMatch || keywordMatch;
   });
 
   // Add debug information

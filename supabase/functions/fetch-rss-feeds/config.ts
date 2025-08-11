@@ -31,7 +31,11 @@ export const INTEREST_KEYWORDS = {
   'Health': [
     'health', 'medical', 'healthcare', 'medicine', 'wellness', 'fitness', 'nutrition',
     'mental health', 'disease', 'treatment', 'research', 'hospital', 'doctors',
-    'pharmaceutical', 'biotech', 'health technology'
+    'pharmaceutical', 'biotech', 'health technology', 'physician', 'clinic', 'nursing',
+    'dental', 'pharmacy', 'surgery', 'diagnosis', 'medical care', 'healthcare provider',
+    'telemedicine', 'medical research', 'medtech', 'digital health', 'medical device',
+    'health tech', 'medical technology', 'healthtech', 'therapeutic', 'medical science',
+    'health innovation', 'patient care', 'clinical', 'medical news', 'health industry'
   ],
   'Entertainment': [
     'entertainment', 'movie', 'film', 'music', 'celebrity', 'tv', 'television',
