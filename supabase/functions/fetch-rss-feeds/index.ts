@@ -191,19 +191,39 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
   // First remove duplicates
   const uniqueArticles = removeDuplicateArticles(newsItems);
   
+  // Map custom interests to main categories and gather keywords
+  const processedInterests = userInterests.map(interest => {
+    const mappedCategory = mapCustomInterestToMainCategory(interest);
+    return mappedCategory || interest;
+  });
+
+  console.log('Original interests:', userInterests);
+  console.log('Processed interests:', processedInterests);
+
   // Get all relevant keywords for the selected interests
-  const keywordSets = userInterests.map(interest => {
+  const keywordSets = processedInterests.map(interest => {
     const keywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || [];
+    console.log(`Keywords for ${interest}:`, keywords);
     return new Set(keywords.map(k => k.toLowerCase()));
+  });
+
+  // Add the original terms as keywords too
+  userInterests.forEach(interest => {
+    keywordSets.push(new Set([interest.toLowerCase()]));
   });
 
   // Filter articles based on keyword matches
   const filteredArticles = uniqueArticles.filter(article => {
     const content = (article.title + " " + article.description).toLowerCase();
+    const category = article.category.toLowerCase();
     
-    // Check if the article matches keywords from any selected interest
+    // Check if article matches any keywords or belongs to mapped category
     return keywordSets.some(keywords => 
-      Array.from(keywords).some(keyword => content.includes(keyword))
+      Array.from(keywords).some(keyword => 
+        content.includes(keyword) || category.includes(keyword)
+      )
+    ) || processedInterests.some(interest => 
+      category.toLowerCase() === interest.toLowerCase()
     );
   });
 

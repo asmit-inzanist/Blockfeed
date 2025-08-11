@@ -93,12 +93,31 @@ export function mapCustomInterestToMainCategory(customInterest: string): string 
     ]
   };
 
-  // Check each category's terms for a match
+  // First check if the interest directly matches a main category name
+  const matchingCategory = Object.keys(categoryMappings).find(category =>
+    normalizeString(category) === normalizedInterest ||
+    normalizeString(category).includes(normalizedInterest) ||
+    normalizedInterest.includes(normalizeString(category))
+  );
+  
+  if (matchingCategory) {
+    console.log(`Direct category match found: ${matchingCategory}`);
+    return matchingCategory;
+  }
+
+  // Then check each category's terms for a match
   for (const [category, terms] of Object.entries(categoryMappings)) {
-    if (terms.some(term => 
-      normalizedInterest.includes(term) || 
-      term.includes(normalizedInterest)
-    )) {
+    if (terms.some(term => {
+      const normalizedTerm = normalizeString(term);
+      return normalizedInterest.includes(normalizedTerm) || 
+             normalizedTerm.includes(normalizedInterest) ||
+             // Check for close matches (e.g., "medical" matches "medicine")
+             (normalizedTerm.length > 4 && 
+              normalizedInterest.length > 4 && 
+              (normalizedTerm.startsWith(normalizedInterest.slice(0, 5)) ||
+               normalizedInterest.startsWith(normalizedTerm.slice(0, 5))));
+    })) {
+      console.log(`Term match found in category: ${category}`);
       return category;
     }
   }
