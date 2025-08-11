@@ -19,7 +19,7 @@ export async function callGemini(
   apiKey: string,
   prompt: string,
   config: GeminiConfig = {}
-) {
+): Promise<string> {
   const models = ['gemini-1.5-flash', 'gemini-pro'];
   let lastError;
 
@@ -84,30 +84,15 @@ export async function findRelatedWords(
   }
   console.log('findRelatedWords called for interest:', interest);
 
-  const prompt = `You are a news classification expert. For the given custom interest or topic, generate relevant search terms and categories that would help find related news articles from RSS feeds.
+  const prompt = `Generate a JSON object of search terms for finding news articles about: ${interest}
 
-INTEREST: ${interest}
-
-TASK:
-1. Analyze the interest and understand its domain
-2. Generate specific terms that might appear in news articles about this topic
-3. Map it to broader news categories
-4. Include related technical terms if applicable
-
-RESPONSE REQUIRED:
-Return a JSON object with these fields (max 15 items per category, ordered by relevance):
+The response must be a clean JSON object like this, no other text:
 {
-  "terms": ["specific words likely to appear in relevant news articles"],
-  "categories": ["matching news categories"],
-  "technologies": ["related technical terms"],
-  "concepts": ["broader topics and themes"]
-}
-
-Make terms specific enough to filter news but broad enough to catch relevant articles.
-Ensure terms are commonly used in news articles.
-Include variations and synonyms.
-
-DO NOT include any other text, only the JSON object.`;
+  "terms": ["5-10 specific keywords that appear in news articles"],
+  "categories": ["2-3 broad news categories"],
+  "technologies": ["3-5 related technical terms"],
+  "concepts": ["2-3 broader themes"]
+}`;
 
   try {
     console.log('Requesting related words from Gemini for:', interest);
@@ -161,41 +146,60 @@ export async function scoreArticles(
   
   for (const chunk of chunks) {
     try {
-      const prompt = `You are an AI article scorer. Score these articles based on user interests.
+      const prompt = `You are an article scorer. Generate a JSON array of scores for articles based on relevance to: ${interests.join(', ')}.
 
-USER INTERESTS: ${interests.join(', ')}
+Score 80-100 for direct matches, 40-79 for indirect matches, 1-39 for unrelated.
 
-SCORING RULES:
-- Score 80-100: Article directly matches interests in title/content
-- Score 40-79: Article indirectly relates to interests
-- Score 1-39: Article doesn't match interests
-
-ARTICLES TO SCORE:
+Articles:
 ${chunk.map((article, index) => 
-`[${index + 1}] "${article.title}"
-Category: ${article.category}
-Description: ${article.description}
-Source: ${article.source}
-`).join('\n\n')}
+`${index + 1}. "${article.title}" (${article.category})`).join('\n')}
 
-RESPONSE REQUIRED:
-Return ONLY a JSON array with exact article titles and scores:
-[{"title": "Exact Title Here", "score": 85}]`;
+Return only a JSON array like this, no other text:
+[
+  {"title": "Exact Article Title", "score": number}
+]`;
 
       const response = await callGemini(apiKey, prompt, {
         temperature: 0.1,
         maxOutputTokens: 1024
       });
 
-      // Clean and parse the response
-      const cleanResponse = response
+      // Extract JSON from response with safety checks
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.error('No JSON array found in response');
+        throw new Error('Invalid response format');
+      }
+
+      let cleanResponse = jsonMatch[0]
         .replace(/```json\s*|\s*```/g, '')
         .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\n/g, ' ')
         .trim();
 
-      const chunkScores = JSON.parse(cleanResponse);
-      if (Array.isArray(chunkScores)) {
-        allScores.push(...chunkScores);
+      // Ensure the JSON is properly terminated
+      if (!cleanResponse.endsWith(']')) {
+        cleanResponse = cleanResponse.substring(0, cleanResponse.lastIndexOf(']') + 1);
+      }
+
+      try {
+        const chunkScores = JSON.parse(cleanResponse);
+        if (Array.isArray(chunkScores)) {
+          // Validate each score object
+          const validScores = chunkScores.filter(score => 
+            typeof score === 'object' && 
+            score !== null && 
+            typeof score.title === 'string' && 
+            typeof score.score === 'number'
+          );
+          allScores.push(...validScores);
+        }
+      } catch (parseError) {
+        console.error('Error parsing chunk scores:', parseError);
+        // If parsing fails, assign default scores to this chunk
+        chunk.forEach(article => {
+          allScores.push({ title: article.title, score: 75 });
+        });
       }
     } catch (error) {
       console.error('Error scoring chunk:', error);

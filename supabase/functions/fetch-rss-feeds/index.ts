@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { findRelatedWords } from './gemini'
 import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
 import { Article, CustomInterestTerm } from './types'
+import { filterRelevantArticles } from './customInterestFilter'
 
 // Disable the no-explicit-any rule for this file as we need to handle unknown response structures
 // deno-lint-ignore-file no-explicit-any
@@ -93,12 +94,14 @@ const RSS_FEEDS = {
 }
 
 interface Article {
-  title: string
-  description: string
-  link: string
-  source: string
-  category: string
-  publishedAt?: string
+  title: string;
+  description: string;
+  link: string;
+  source: string;
+  category: string;
+  publishedAt?: string;
+  ai_score?: number;
+  relevanceScore?: number;
 }
 
 function parseRSSFeed(xmlText: string, source: string): Article[] {
@@ -182,13 +185,31 @@ import { removeDuplicateArticles } from './utils'
 
 const PREDEFINED_INTERESTS = new Set(['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News']);
 
+interface FilterResult {
+  filteredArticles: Article[];
+  debugInfo: {
+    predefinedMatches: number;
+    customMatches: number;
+    terms: string[];
+    categories: string[];
+  };
+}
+
 async function filterNewsByInterests(
   newsItems: Article[], 
   userInterests: string[],
   apiKey: string
-): Promise<Article[]> {
+): Promise<FilterResult> {
   if (!userInterests || userInterests.length === 0) {
-    return removeDuplicateArticles(newsItems);
+    return {
+      filteredArticles: removeDuplicateArticles(newsItems),
+      debugInfo: {
+        predefinedMatches: 0,
+        customMatches: 0,
+        terms: [],
+        categories: []
+      }
+    };
   }
 
   // First remove duplicates
@@ -198,59 +219,53 @@ async function filterNewsByInterests(
   const predefinedInterests = userInterests.filter(i => PREDEFINED_INTERESTS.has(i));
   const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
   
-  // Get related words for custom interests
-  const relatedWordsPromises = customInterests.map(interest => 
-    findRelatedWords(interest, apiKey)
-      .catch(error => {
-        console.error(`Error getting related words for ${interest}:`, error);
-        return null;
-      })
-  );
-
-  const relatedWordsList = await Promise.all(relatedWordsPromises);
-  
-  // Combine all search terms
+  // Handle predefined interests with the existing approach
   const searchTerms = new Set<string>();
   const newsCategories = new Set<string>();
   
-  // Add predefined interests
   predefinedInterests.forEach(interest => {
     searchTerms.add(interest.toLowerCase());
     newsCategories.add(interest.toLowerCase());
   });
-  
-  // Add related terms from custom interests
-  relatedWordsList.forEach(words => {
-    if (words) {
-      words.terms.forEach(term => searchTerms.add(term.toLowerCase()));
-      words.categories.forEach(cat => newsCategories.add(cat.toLowerCase()));
-      words.technologies?.forEach(tech => searchTerms.add(tech.toLowerCase()));
-      words.concepts?.forEach(concept => searchTerms.add(concept.toLowerCase()));
-    }
-  });
 
-  // Custom interests themselves should be search terms
-  customInterests.forEach(interest => searchTerms.add(interest.toLowerCase()));
-
-  console.log('Filtering with terms:', Array.from(searchTerms));
-  console.log('Matching categories:', Array.from(newsCategories));
-
-  return uniqueArticles.filter(item => {
+  // Filter articles for predefined interests
+  const predefinedMatches = uniqueArticles.filter(item => {
     const content = (item.title + " " + item.description).toLowerCase();
     const category = (item.category || '').toLowerCase();
     
-    // Match if the article category matches any of our categories
-    const categoryMatch = newsCategories.size === 0 || Array.from(newsCategories).some(cat => 
+    const categoryMatch = Array.from(newsCategories).some(cat => 
       category.includes(cat) || cat.includes(category)
     );
-
-    // Match if any search term appears in the title or description
     const contentMatch = Array.from(searchTerms).some(term => 
       content.includes(term)
     );
 
     return categoryMatch || contentMatch;
   });
+
+  // Handle custom interests with the new approach
+  let customMatches: Article[] = [];
+  for (const interest of customInterests) {
+    const relevantArticles = await filterRelevantArticles(
+      uniqueArticles,
+      interest,
+      apiKey
+    );
+    customMatches = [...customMatches, ...relevantArticles];
+  }
+
+  // Combine and deduplicate results
+  const allMatches = removeDuplicateArticles([...predefinedMatches, ...customMatches]);
+
+  return {
+    filteredArticles: allMatches,
+    debugInfo: {
+      predefinedMatches: predefinedMatches.length,
+      customMatches: customMatches.length,
+      terms: Array.from(searchTerms),
+      categories: Array.from(newsCategories)
+    }
+  };
 }
 
 import { scoreArticles } from './gemini'
@@ -490,16 +505,15 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY is required for filtering with custom interests');
     }
 
-    const { filteredArticles, debugInfo } = await filterNewsByInterests(allArticles, userInterests, geminiKey);
+    const result = await filterNewsByInterests(allArticles, userInterests, geminiKey);
+    const { filteredArticles, debugInfo } = result;
 
     console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
-    
-    // Debug information
-    console.log('Debug Info:', {
-      totalArticles: allArticles.length,
-      filteredArticles: filteredArticles.length,
-      userInterests,
-      sampleFilteredTitles: filteredArticles.slice(0, 3).map(a => a.title)
+    console.log('Filtering stats:', {
+      predefinedMatches: debugInfo.predefinedMatches,
+      customMatches: debugInfo.customMatches,
+      terms: debugInfo.terms,
+      categories: debugInfo.categories
     });
 
     // Personalize with Gemini
