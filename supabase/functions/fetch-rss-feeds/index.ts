@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config'
-import { Article } from './types'
-import { filterArticlesForCustomInterest } from './directFilter'
-import { removeDuplicateArticles } from './utils'
-import { scoreArticles } from './gemini'
+import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config.ts'
+import { Article } from './types.ts'
+import { filterArticlesForCustomInterest } from './directFilter.ts'
+import { removeDuplicateArticles } from './utils.ts'
+import { scoreArticles } from './gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

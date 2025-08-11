@@ -1,4 +1,4 @@
-import { Article } from './types';
+import { Article } from './types.ts';
 
 interface KeywordSource {
   predefined: string[];

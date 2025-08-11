@@ -1,4 +1,4 @@
-import { Article } from './types'
+import { Article } from './types.ts'
 
 export function removeDuplicateArticles(articles: Article[]): Article[] {
   const seen = new Map<string, Article>();
