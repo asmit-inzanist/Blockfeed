@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config.ts'
 import { Article } from './types.ts'
 import { filterArticlesForCustomInterest } from './directFilter.ts'
-import { removeDuplicateArticles } from './utils.ts'
+import { removeDuplicateArticles, mapCustomInterestToMainCategory } from './utils.ts'
 import { scoreArticles } from './gemini.ts'
 
 const corsHeaders = {
@@ -297,8 +297,26 @@ serve(async (req) => {
         .maybeSingle()
 
       if (preferences) {
-        const combined = [...(preferences.interests || []), ...(preferences.custom_interests || [])]
-        if (combined.length > 0) userInterests = combined
+        // Process custom interests and map them to main categories if possible
+        const mappedInterests = new Set<string>();
+        
+        // Add predefined interests
+        preferences.interests?.forEach(interest => mappedInterests.add(interest));
+        
+        // Map custom interests to main categories where possible
+        preferences.custom_interests?.forEach(customInterest => {
+          const mappedCategory = mapCustomInterestToMainCategory(customInterest);
+          if (mappedCategory) {
+            mappedInterests.add(mappedCategory);
+            console.log(`Mapped custom interest "${customInterest}" to category "${mappedCategory}"`);
+          } else {
+            // If no mapping found, keep the custom interest as is
+            mappedInterests.add(customInterest);
+          }
+        });
+
+        const combined = Array.from(mappedInterests);
+        if (combined.length > 0) userInterests = combined;
       }
     }
 
@@ -307,10 +325,33 @@ serve(async (req) => {
       INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
     );
 
-    // Use direct filtering approach
-    const filteredArticles = await filterNewsByInterests(allArticles, userInterests);
+    // Separate standard and custom interests
+    const standardInterests = userInterests.filter(interest => INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS]);
+    const customInterests = userInterests.filter(interest => !INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS]);
 
-    console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
+    // Handle standard interests
+    const standardFilteredArticles = standardInterests.length > 0 
+      ? await filterNewsByInterests(allArticles, standardInterests)
+      : [];
+
+    // Handle custom interests
+    const customFilteredArticles = await Promise.all(
+      customInterests.map(async interest => {
+        const filtered = await filterArticlesForCustomInterest(allArticles, interest);
+        return filtered;
+      })
+    ).then(results => results.flat());
+
+    // Combine and remove duplicates
+    const filteredArticles = removeDuplicateArticles([
+      ...standardFilteredArticles,
+      ...customFilteredArticles
+    ]);
+
+    console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests:`, {
+      standard: standardInterests.join(', '),
+      custom: customInterests.join(', ')
+    });
 
     // Personalize with Gemini
     const personalizedArticles = await personalizeWithGemini(
