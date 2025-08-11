@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { findRelatedWords } from './gemini'
 import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
 import { Article, CustomInterestTerm } from './types'
-import { filterRelevantArticles } from './customInterestFilter'
+import { filterArticlesForCustomInterest } from './directFilter'
 
 // Disable the no-explicit-any rule for this file as we need to handle unknown response structures
 // deno-lint-ignore-file no-explicit-any
@@ -197,19 +196,10 @@ interface FilterResult {
 
 async function filterNewsByInterests(
   newsItems: Article[], 
-  userInterests: string[],
-  apiKey: string
-): Promise<FilterResult> {
+  userInterests: string[]
+): Promise<Article[]> {
   if (!userInterests || userInterests.length === 0) {
-    return {
-      filteredArticles: removeDuplicateArticles(newsItems),
-      debugInfo: {
-        predefinedMatches: 0,
-        customMatches: 0,
-        terms: [],
-        categories: []
-      }
-    };
+    return removeDuplicateArticles(newsItems);
   }
 
   // First remove duplicates
@@ -243,29 +233,25 @@ async function filterNewsByInterests(
     return categoryMatch || contentMatch;
   });
 
-  // Handle custom interests with the new approach
+  // Handle custom interests with the direct filtering approach
   let customMatches: Article[] = [];
   for (const interest of customInterests) {
-    const relevantArticles = await filterRelevantArticles(
-      uniqueArticles,
-      interest,
-      apiKey
-    );
+    const relevantArticles = await filterArticlesForCustomInterest(uniqueArticles, interest);
     customMatches = [...customMatches, ...relevantArticles];
   }
 
   // Combine and deduplicate results
   const allMatches = removeDuplicateArticles([...predefinedMatches, ...customMatches]);
+  
+  console.log('Filtering results:', {
+    total: newsItems.length,
+    filtered: allMatches.length,
+    predefinedMatches: predefinedMatches.length,
+    customMatches: customMatches.length,
+    interests: userInterests
+  });
 
-  return {
-    filteredArticles: allMatches,
-    debugInfo: {
-      predefinedMatches: predefinedMatches.length,
-      customMatches: customMatches.length,
-      terms: Array.from(searchTerms),
-      categories: Array.from(newsCategories)
-    }
-  };
+  return allMatches;
 }
 
 import { scoreArticles } from './gemini'
@@ -284,29 +270,6 @@ async function personalizeWithGemini(articles: Article[], interests: string[]): 
     console.error('Error personalizing articles:', error)
     return articles.map(article => ({ ...article, ai_score: 75 }))
   }
-  
-    if (!geminiApiKey) {
-      console.error('Error: GEMINI_API_KEY environment variable is not set')
-      return articles.map(article => ({ ...article }))
-    }
-    
-    if (articles.length === 0) {
-      console.log('Warning: No articles to process')
-      return articles
-    }
-    
-    if (interests.length === 0) {
-      console.log('Warning: No user interests provided')
-      return articles.map(article => ({ ...article }))
-    }
-
-    // Log the first few articles we're about to process
-    console.log('Sample articles to be scored:', articles.slice(0, 3).map(a => ({
-      title: a.title,
-      category: a.category
-    })))
-    console.log('User interests for scoring:', interests)  try {
-    console.log('Making Gemini API request...')
     
     // Try different models if one fails
     const models = ['gemini-1.5-flash', 'gemini-pro']
@@ -432,9 +395,8 @@ Return only a JSON array with each object having 'title' and 'score' fields. The
     }
   } catch (error) {
     console.error('Error calling Gemini API:', error)
+    return articles.map(article => ({ ...article, ai_score: 75 }))
   }
-
-  return articles.map(article => ({ ...article, ai_score: 75 }))
 }
 
 serve(async (req) => {
@@ -500,21 +462,10 @@ serve(async (req) => {
     }
 
     // Use advanced filtering with keywords
-    const geminiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiKey) {
-      throw new Error('GEMINI_API_KEY is required for filtering with custom interests');
-    }
-
-    const result = await filterNewsByInterests(allArticles, userInterests, geminiKey);
-    const { filteredArticles, debugInfo } = result;
+    // Filter articles based on user interests
+    const filteredArticles = await filterNewsByInterests(allArticles, userInterests);
 
     console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
-    console.log('Filtering stats:', {
-      predefinedMatches: debugInfo.predefinedMatches,
-      customMatches: debugInfo.customMatches,
-      terms: debugInfo.terms,
-      categories: debugInfo.categories
-    });
 
     // Personalize with Gemini
     const personalizedArticles = await personalizeWithGemini(
@@ -570,8 +521,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         articles: personalizedArticles.slice(0, MAX_RETURNED),
-        interests: userInterests,
-        customTerms
+        interests: userInterests
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
