@@ -2,30 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config'
 import { Article } from './types'
-import { filterArticlesForCustomInterest, getExp    // Get custom interests and their keywords
-    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
-    let filteringKeywords = [];
-
-    if (customInterests.length > 0) {
-      try {
-        // Get keywords for each custom interest
-        const keywordPromises = customInterests.map(interest => getExpandedKeywords(interest));
-        const keywordResults = await Promise.all(keywordPromises);
-        
-        // Combine keywords from all interests
-        filteringKeywords = keywordResults.flatMap(result => result.keywords);
-        
-        // Log for debugging
-        console.log('Filtering keywords:', {
-          interests: customInterests,
-          keywords: filteringKeywords
-        });
-      } catch (error) {
-        console.error('Error getting keywords:', error);
-      }
-    }
-
-    // Use direct filtering approachfrom './directFilter'
+import { filterArticlesForCustomInterest } from './directFilter'
 import { removeDuplicateArticles } from './utils'
 import { scoreArticles } from './gemini'
 
@@ -307,20 +284,10 @@ serve(async (req) => {
       }
     }
 
-    // Get expanded keywords for custom interests
-    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
-    let debugKeywords = null;
-    let debugKeywordSource = null;
-
-    if (customInterests.length > 0) {
-      try {
-        const { keywords, source } = await getExpandedKeywords(customInterests[0]);
-        debugKeywords = keywords;
-        debugKeywordSource = source;
-      } catch (error) {
-        console.error('Error getting debug keywords:', error);
-      }
-    }
+    // Debug info for predefined interests
+    const debugKeywords = userInterests.flatMap(interest => 
+      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
+    );
 
     // Use direct filtering approach
     const filteredArticles = await filterNewsByInterests(allArticles, userInterests);
@@ -354,15 +321,9 @@ serve(async (req) => {
     const debugInfo = filteredArticles.length > 0 ? (filteredArticles[0] as any).debug || null : null;
 
     // Get filtering keywords from filtered articles
-    const keywords = filteredArticles
-      .filter(article => (article as any).debug?.keywords)
-      .map(article => (article as any).debug.keywords)
-      .flat();
-
-    // Get keyword sources if available
-    const keywordSources = filteredArticles
-      .filter(article => (article as any).debug?.keywordSource)
-      .map(article => (article as any).debug.keywordSource);
+    const keywords = userInterests.flatMap(interest => 
+      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
+    );
 
     // Log debug info
     console.log('Debug info:', {
