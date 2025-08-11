@@ -10,9 +10,10 @@ interface InterestsSelectorProps {
   onInterestsChange: (interests: string[]) => void;
 }
 
-const MAIN_CATEGORIES = ['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News'];
-const TECH_CATEGORIES = ['AI & ML', 'Startups', 'Gaming', 'Cybersecurity', 'Business Tech'];
-const PREDEFINED_INTERESTS = [...MAIN_CATEGORIES, ...TECH_CATEGORIES];
+const PREDEFINED_INTERESTS = [
+  'Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News',
+  'AI & ML', 'Startups', 'Gaming', 'Cybersecurity', 'Business Tech'
+];
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -91,7 +92,7 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
             </div>
           </div>
 
-          {/* Main Categories */}
+          {/* All Categories */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">Popular Categories</h4>
@@ -105,31 +106,7 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {MAIN_CATEGORIES.map((interest) => (
-                <Button
-                  key={interest}
-                  variant={selectedInterests.includes(interest) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => 
-                    selectedInterests.includes(interest) 
-                      ? handleRemoveInterest(interest)
-                      : handleAddInterest(interest)
-                  }
-                  className="text-xs"
-                >
-                  {interest}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tech Categories */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium">Tech Categories</h4>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {TECH_CATEGORIES.map((interest) => (
+              {PREDEFINED_INTERESTS.map((interest) => (
                 <Button
                   key={interest}
                   variant={selectedInterests.includes(interest) ? "default" : "outline"}
