@@ -1,10 +1,16 @@
 import { Article } from './types';
 
+interface KeywordSource {
+  predefined: string[];
+  ai: string[];
+}
+
 interface ScoredArticle extends Article {
   relevanceScore: number;
   matchReason?: string;
   debug?: {
     keywords: string[];
+    keywordSource: KeywordSource;
     interest: string;
     totalKeywords: number;
     keywordsUsed: string[];
@@ -13,6 +19,12 @@ interface ScoredArticle extends Article {
 
 // Core keywords for common topics
 const TOPIC_KEYWORDS = {
+  medical: [
+    'medical', 'health', 'healthcare', 'hospital', 'doctor', 'patient', 'treatment',
+    'medicine', 'clinical', 'research', 'disease', 'condition', 'therapy', 'cure',
+    'diagnosis', 'pharmaceutical', 'drug', 'surgery', 'procedure', 'physician',
+    'wellness', 'symptoms', 'recovery', 'care', 'medical science', 'healthcare provider'
+  ],
   business: [
     'business', 'company', 'startup', 'market', 'industry', 'CEO', 'corporate',
     'revenue', 'profit', 'growth', 'enterprise', 'merger', 'acquisition',
@@ -99,6 +111,7 @@ async function findSimilarTopics(interest: string): Promise<string[]> {
   
   // Map of related terms to main topics
   const topicMap: Record<string, string[]> = {
+    medical: ['medical', 'health', 'healthcare', 'hospital', 'medicine', 'clinical', 'doctor'],
     business: ['business', 'company', 'corporate', 'enterprise', 'commerce', 'trade', 'industry'],
     finance: ['finance', 'financial', 'money', 'investment', 'banking', 'economy', 'market'],
     technology: ['tech', 'technology', 'digital', 'software', 'IT', 'computing'],
@@ -120,11 +133,13 @@ async function findSimilarTopics(interest: string): Promise<string[]> {
   return matchingTopics;
 }
 
-async function getExpandedKeywords(interest: string): Promise<string[]> {
-  const keywords = new Set<string>();
+async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
+  const predefinedKeywords = new Set<string>();
+  const aiKeywords = new Set<string>();
+  const commonVariations = new Set<string>();
   
   // Add the original interest
-  keywords.add(interest.toLowerCase());
+  predefinedKeywords.add(interest.toLowerCase());
   
   // Find similar predefined topics
   const similarTopics = await findSimilarTopics(interest);
@@ -132,22 +147,46 @@ async function getExpandedKeywords(interest: string): Promise<string[]> {
   // Add keywords from similar topics
   similarTopics.forEach(topic => {
     if (TOPIC_KEYWORDS[topic]) {
-      TOPIC_KEYWORDS[topic].forEach(keyword => keywords.add(keyword.toLowerCase()));
+      TOPIC_KEYWORDS[topic].forEach(keyword => predefinedKeywords.add(keyword.toLowerCase()));
     }
   });
 
-  // Try to get AI suggestions if we don't have many keywords yet
-  if (keywords.size < 10) {
-    try {
-      const apiKey = Deno.env.get('GEMINI_API_KEY');
-      if (apiKey) {
-        const aiSuggestions = await getGeminiSuggestions(interest, apiKey);
-        aiSuggestions.forEach(keyword => keywords.add(keyword.toLowerCase()));
-      }
-    } catch (error) {
-      console.error('Error getting AI suggestions:', error);
+  // Always get AI suggestions for custom interests
+  try {
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    if (apiKey) {
+      const aiSuggestions = await getGeminiSuggestions(interest, apiKey);
+      aiSuggestions.forEach(keyword => aiKeywords.add(keyword.toLowerCase()));
     }
+  } catch (error) {
+    console.error('Error getting AI suggestions:', error);
   }
+
+  // Add common variations for both predefined and AI keywords
+  const allWords = new Set([...Array.from(predefinedKeywords), ...Array.from(aiKeywords)]);
+  for (const word of allWords) {
+    const words = word.split(/\s+/);
+    words.forEach(w => {
+      commonVariations.add(w);
+      commonVariations.add(w + 's'); // plural
+      commonVariations.add(w + 'ing'); // gerund
+      if (w.endsWith('y')) {
+        commonVariations.add(w.slice(0, -1) + 'ies'); // y -> ies plural
+      }
+    });
+  }
+
+  return {
+    keywords: [...new Set([
+      ...Array.from(predefinedKeywords),
+      ...Array.from(aiKeywords),
+      ...Array.from(commonVariations)
+    ])],
+    source: {
+      predefined: Array.from(predefinedKeywords),
+      ai: Array.from(aiKeywords)
+    }
+  };
   
   // Add common variations
   const words = interest.toLowerCase().split(/\s+/);
@@ -229,13 +268,13 @@ export async function filterArticlesForCustomInterest(
 ): Promise<ScoredArticle[]> {
   console.log('Processing custom interest:', interest);
   
-  // Get expanded keywords
-  const keywords = await getExpandedKeywords(interest);
-  console.log('Expanded keywords:', keywords);
+  // Get expanded keywords with sources
+  const keywordData = await getExpandedKeywords(interest);
+  console.log('Expanded keywords:', keywordData);
 
   // Score and filter articles
   const scoredArticles = articles.map(article => {
-    const { score, matchReason } = calculateArticleScore(article, keywords, interest);
+    const { score, matchReason } = calculateArticleScore(article, keywordData.keywords, interest);
     return {
       ...article,
       relevanceScore: score,
@@ -244,7 +283,7 @@ export async function filterArticlesForCustomInterest(
   });
 
   // Filter articles with scores above threshold and sort by score
-  const MIN_SCORE = 20; // Adjust this threshold as needed
+  const MIN_SCORE = 10; // Lowered threshold for better matching
   const filteredArticles = scoredArticles
     .filter(article => article.relevanceScore >= MIN_SCORE)
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
@@ -257,21 +296,31 @@ export async function filterArticlesForCustomInterest(
       reason: a.matchReason
     })));
   } else {
-    console.log('No matches found. Keywords used:', keywords);
+    console.log('No matches found. Keywords used:', keywordData.keywords);
+    console.log('AI generated keywords:', keywordData.source.ai);
   }
 
   // Add debug information to each article
   const articlesWithDebug = filteredArticles.map(article => ({
     ...article,
     debug: {
-      keywords,
+      keywords: keywordData.keywords,
+      keywordSource: keywordData.source,
       interest,
-      totalKeywords: keywords.length,
-      keywordsUsed: keywords.filter(k => 
+      totalKeywords: keywordData.keywords.length,
+      keywordsUsed: keywordData.keywords.filter(k => 
         (article.title + article.description).toLowerCase().includes(k.toLowerCase())
       )
     }
   }));
+
+  console.log('Debug info for filtering:', {
+    interest,
+    totalKeywords: keywordData.keywords.length,
+    predefinedKeywords: keywordData.source.predefined.length,
+    aiGeneratedKeywords: keywordData.source.ai.length,
+    matchingArticles: filteredArticles.length
+  });
 
   return articlesWithDebug;
 }
