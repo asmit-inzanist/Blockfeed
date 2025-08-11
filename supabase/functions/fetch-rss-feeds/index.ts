@@ -125,42 +125,60 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
-  // Check entertainment first to avoid sports misclassification
-  if (
-    sourceLower.includes('entertainment') ||
-    sourceLower.includes('tmz') ||
-    sourceLower.includes('variety') ||
-    (sourceLower.includes('cbs') && sourceLower.includes('entertainment'))
-  ) return 'Entertainment'
-  // More specific sports matching
-  if (
-    sourceLower.includes('ndtv sports') ||
-    sourceLower.includes('sky sports') ||
-    sourceLower.includes('sportskeeda') ||
-    sourceLower.includes('sportsweez') ||
-    sourceLower.includes('deadspin') ||
-    sourceLower.includes('fox sports') ||
-    (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))
-  ) return 'Sports'
+  
+  if (sourceLower.includes('ai') || sourceLower.includes('artificial intelligence') || 
+      sourceLower.includes('machine learning') || sourceLower.includes('deepmind')) return 'AI & ML'
+  
+  if (sourceLower.includes('startup') || sourceLower.includes('ycombinator') || 
+      sourceLower.includes('indie hackers')) return 'Startups'
+  
+  if (sourceLower.includes('game') || sourceLower.includes('ign') || 
+      sourceLower.includes('polygon') || sourceLower.includes('esports')) return 'Gaming'
+  
+  if (sourceLower.includes('security') || sourceLower.includes('hack') || 
+      sourceLower.includes('threat')) return 'Cybersecurity'
+  
+  if (sourceLower.includes('cio') || sourceLower.includes('enterprise') || 
+      sourceLower.includes('infoworld') || sourceLower.includes('eweek')) return 'Business Tech'
+  if (sourceLower.includes('entertainment') || sourceLower.includes('tmz') || 
+      sourceLower.includes('variety')) return 'Entertainment'
+  
+  if (sourceLower.includes('ndtv sports') || sourceLower.includes('sky sports') || 
+      sourceLower.includes('sports') && !sourceLower.includes('entertainment')) return 'Sports'
+  
   if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology'
-  if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || sourceLower.includes('marketbeat')) return 'Finance'
+  
+  if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || 
+      sourceLower.includes('marketbeat')) return 'Finance'
+  
   if (sourceLower.includes('politics') || sourceLower.includes('theprint')) return 'Politics'
-  if (sourceLower.includes('medical') || sourceLower.includes('medlineplus')) return 'Health'
+  
+  if (sourceLower.includes('medical') || sourceLower.includes('health')) return 'Health'
+  
   if (sourceLower.includes('science')) return 'Science'
-  if (sourceLower.includes('world') || sourceLower.includes('bbc') || sourceLower.includes('nbc')) return 'World News'
+  
+  if (sourceLower.includes('world') || sourceLower.includes('bbc') || 
+      sourceLower.includes('nbc')) return 'World News'
+  
   return 'General'
 }
 
 function getKeywordsForCategory(category: string): string[] {
   const keywordMap: Record<string, string[]> = {
-    'technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
-    'finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
-    'sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
-    'politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
-    'health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
-    'entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
-    'science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
-    'world': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis']
+      'Technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
+    'Finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
+    'Sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
+    'Politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
+    'Health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
+    'Entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
+    'Science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
+    'World News': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis'],
+    
+      'AI & ML': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'ai models', 'nlp', 'computer vision', 'ai research', 'robotics', 'automation', 'data science', 'algorithms', 'ai applications'],
+    'Startups': ['startup', 'entrepreneur', 'venture capital', 'funding', 'seed round', 'innovation', 'tech startup', 'startup ecosystem', 'incubator', 'accelerator', 'business model', 'unicorn', 'startup founder'],
+    'Gaming': ['gaming', 'video games', 'esports', 'game development', 'console gaming', 'pc gaming', 'mobile gaming', 'game industry', 'game technology', 'virtual reality', 'augmented reality', 'gaming hardware'],
+    'Cybersecurity': ['cybersecurity', 'security', 'hacking', 'cyber attack', 'data breach', 'privacy', 'encryption', 'network security', 'information security', 'cyber defense', 'security technology', 'cyber threats'],
+    'Business Tech': ['enterprise technology', 'business software', 'cloud computing', 'digital transformation', 'saas', 'enterprise solutions', 'business intelligence', 'data analytics', 'productivity tools', 'business automation']
   }
   return keywordMap[category.toLowerCase()] || []
 }
