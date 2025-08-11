@@ -30,46 +30,61 @@ interface GeminiConfig {
   topP?: number;
 }
 
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function callGemini(
   apiKey: string,
   prompt: string,
   config: GeminiConfig = {}
 ): Promise<string> {
   const models = ['gemini-1.5-flash', 'gemini-pro'];
+  const MAX_RETRIES = 3;
   let lastError;
 
   for (const model of models) {
-    try {
-      console.log(`Trying ${model}...`);
-      
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }],
-            generationConfig: {
-              temperature: config.temperature ?? 0.1,
-              maxOutputTokens: config.maxOutputTokens ?? 2048,
-              topK: config.topK ?? 1,
-              topP: config.topP ?? 0.1
-            }
-          })
-        }
-      );
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        console.log(`Trying ${model} (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+        
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: prompt
+                }]
+              }],
+              generationConfig: {
+                temperature: config.temperature ?? 0.1,
+                maxOutputTokens: config.maxOutputTokens ?? 2048,
+                topK: config.topK ?? 1,
+                topP: config.topP ?? 0.1
+              }
+            })
+          }
+        );
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`${model} error:`, response.status, errorText);
+        
+        // Check if the error is due to overload
+        if (response.status === 503) {
+          const backoffTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+          console.log(`Model overloaded, waiting ${backoffTime}ms before retry...`);
+          await sleep(backoffTime);
+          continue;
+        }
+        
         lastError = new Error(`${model} returned ${response.status}: ${errorText}`);
-        continue;
+        break; // Try next model for non-overload errors
       }
 
       const data = await response.json();
@@ -77,17 +92,26 @@ export async function callGemini(
       
       if (!text) {
         lastError = new Error(`${model} returned no text in response`);
-        continue;
+        if (attempt < MAX_RETRIES - 1) {
+          await sleep(1000); // Wait 1s before retry
+          continue;
+        }
+        break;
       }
 
       return text;
     } catch (error) {
       console.error(`${model} error:`, error);
       lastError = error;
+      if (attempt < MAX_RETRIES - 1) {
+        await sleep(1000); // Wait 1s before retry
+        continue;
+      }
     }
   }
+}
 
-  throw lastError || new Error('All Gemini models failed');
+throw lastError || new Error('All Gemini models failed');
 }
 
 export async function findRelatedWords(
@@ -157,13 +181,42 @@ Return ONLY the JSON object, no other text.`;
   }
 }
 
+function getBasicScore(article: Article, interests: string[]): number {
+  const content = (article.title + " " + (article.description || "")).toLowerCase();
+  const category = (article.category || "").toLowerCase();
+  
+  let score = 0;
+  const interestsLower = interests.map(i => i.toLowerCase());
+
+  // Direct interest matches in title (highest weight)
+  if (interestsLower.some(interest => article.title.toLowerCase().includes(interest))) {
+    score += 50;
+  }
+
+  // Category matches
+  if (interestsLower.some(interest => category.includes(interest))) {
+    score += 20;
+  }
+
+  // Content matches
+  const matchCount = interestsLower.filter(interest => content.includes(interest)).length;
+  score += matchCount * 10;
+
+  // Normalize to 0-100
+  return Math.min(100, Math.max(0, score));
+}
+
 export async function scoreArticles(
   articles: Article[],
   interests: string[],
   apiKey: string
 ): Promise<Article[]> {
   if (!apiKey) {
-    throw new Error('Gemini API key is required');
+    console.warn('No Gemini API key provided, falling back to basic scoring');
+    return articles.map(article => ({
+      ...article,
+      ai_score: getBasicScore(article, interests)
+    }));
   }
 
   if (articles.length === 0) {
@@ -254,9 +307,12 @@ Return only a JSON array like this, no other text:
       }
     } catch (error) {
       console.error('Error scoring chunk:', error);
-      // If a chunk fails, give default scores to its articles
+      // If Gemini fails, use basic scoring as fallback
       chunk.forEach(article => {
-        allScores.push({ title: article.title, score: 75 });
+        allScores.push({
+          title: article.title,
+          score: getBasicScore(article, interests)
+        });
       });
     }
   }
