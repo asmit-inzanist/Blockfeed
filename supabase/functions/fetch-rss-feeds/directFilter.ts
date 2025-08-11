@@ -133,7 +133,7 @@ async function findSimilarTopics(interest: string): Promise<string[]> {
   return matchingTopics;
 }
 
-async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
+export async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
   const predefinedKeywords = new Set<string>();
   const aiKeywords = new Set<string>();
   const commonVariations = new Set<string>();

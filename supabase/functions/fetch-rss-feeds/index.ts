@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
 import { Article } from './types'
-import { filterArticlesForCustomInterest } from './directFilter'
+import { filterArticlesForCustomInterest, getExpandedKeywords } from './directFilter'
 import { removeDuplicateArticles } from './utils'
 import { scoreArticles } from './gemini'
 
@@ -289,6 +289,21 @@ serve(async (req) => {
       }
     }
 
+    // Get expanded keywords for custom interests
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    let debugKeywords = null;
+    let debugKeywordSource = null;
+
+    if (customInterests.length > 0) {
+      try {
+        const { keywords, source } = await getExpandedKeywords(customInterests[0]);
+        debugKeywords = keywords;
+        debugKeywordSource = source;
+      } catch (error) {
+        console.error('Error getting debug keywords:', error);
+      }
+    }
+
     // Use direct filtering approach
     const filteredArticles = await filterNewsByInterests(allArticles, userInterests);
 
@@ -318,10 +333,22 @@ serve(async (req) => {
         .upsert(articlesToStore, { onConflict: 'user_id,link' })
     }
 
+    const debugInfo = filteredArticles.length > 0 ? (filteredArticles[0] as any).debug || null : null;
+
     return new Response(
       JSON.stringify({ 
         articles: personalizedArticles.slice(0, MAX_RETURNED),
-        interests: userInterests
+        interests: userInterests,
+        debug: {
+          totalFetched: allArticles.length,
+          afterFiltering: filteredArticles.length,
+          interestCount: userInterests.length,
+          matchRate: filteredArticles.length > 0 
+            ? Math.round((filteredArticles.length / allArticles.length) * 100)
+            : 0,
+          keywords: debugInfo?.keywords || [],
+          keywordSource: debugInfo?.keywordSource || null
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

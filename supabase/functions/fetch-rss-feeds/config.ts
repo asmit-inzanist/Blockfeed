@@ -6,7 +6,7 @@ export function getGeminiKey(): string {
   return key;
 }
 
-export const PREDEFINED_INTERESTS = [
+export const PREDEFINED_INTERESTS = new Set([
   'Technology',
   'Finance', 
   'Sports',
@@ -15,4 +15,4 @@ export const PREDEFINED_INTERESTS = [
   'Entertainment',
   'Science',
   'World News'
-] as const;
+]);
