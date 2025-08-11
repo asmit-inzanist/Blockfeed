@@ -1,15 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { getGeminiKey, PREDEFINED_INTERESTS } from './config'
-import { Article, CustomInterestTerm } from './types'
+import { Article } from './types'
 import { filterArticlesForCustomInterest } from './directFilter'
-
-// Disable the no-explicit-any rule for this file as we need to handle unknown response structures
-// deno-lint-ignore-file no-explicit-any
-  interest: string;
-  terms: string[];
-  categories: string[];
-}
+import { removeDuplicateArticles } from './utils'
+import { scoreArticles } from './gemini'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,17 +87,6 @@ const RSS_FEEDS = {
   'NDTV (RSS index)': 'https://www.ndtv.com/rss'
 }
 
-interface Article {
-  title: string;
-  description: string;
-  link: string;
-  source: string;
-  category: string;
-  publishedAt?: string;
-  ai_score?: number;
-  relevanceScore?: number;
-}
-
 function parseRSSFeed(xmlText: string, source: string): Article[] {
   const articles: Article[] = []
   
@@ -180,24 +164,7 @@ function getKeywordsForCategory(category: string): string[] {
   return keywordMap[category.toLowerCase()] || []
 }
 
-import { removeDuplicateArticles } from './utils'
-
-const PREDEFINED_INTERESTS = new Set(['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News']);
-
-interface FilterResult {
-  filteredArticles: Article[];
-  debugInfo: {
-    predefinedMatches: number;
-    customMatches: number;
-    terms: string[];
-    categories: string[];
-  };
-}
-
-async function filterNewsByInterests(
-  newsItems: Article[], 
-  userInterests: string[]
-): Promise<Article[]> {
+async function filterNewsByInterests(newsItems: Article[], userInterests: string[]): Promise<Article[]> {
   if (!userInterests || userInterests.length === 0) {
     return removeDuplicateArticles(newsItems);
   }
@@ -241,20 +208,8 @@ async function filterNewsByInterests(
   }
 
   // Combine and deduplicate results
-  const allMatches = removeDuplicateArticles([...predefinedMatches, ...customMatches]);
-  
-  console.log('Filtering results:', {
-    total: newsItems.length,
-    filtered: allMatches.length,
-    predefinedMatches: predefinedMatches.length,
-    customMatches: customMatches.length,
-    interests: userInterests
-  });
-
-  return allMatches;
+  return removeDuplicateArticles([...predefinedMatches, ...customMatches]);
 }
-
-import { scoreArticles } from './gemini'
 
 async function personalizeWithGemini(articles: Article[], interests: string[]): Promise<Article[]> {
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
@@ -268,133 +223,6 @@ async function personalizeWithGemini(articles: Article[], interests: string[]): 
     return await scoreArticles(articles, interests, geminiApiKey)
   } catch (error) {
     console.error('Error personalizing articles:', error)
-    return articles.map(article => ({ ...article, ai_score: 75 }))
-  }
-    
-    // Try different models if one fails
-    const models = ['gemini-1.5-flash', 'gemini-pro']
-    let response
-    let lastError
-    
-    for (const model of models) {
-      try {
-        console.log(`Trying model: ${model} for article scoring`)
-        
-        const prompt = {
-          contents: [{
-            parts: [{
-              text: `You are an AI article scorer. Your task is to analyze news articles and assign relevance scores based on user interests.
-
-USER INTERESTS: ${interests.join(', ')}
-
-SCORING GUIDELINES:
-- Score each article from 1 to 100
-- 80-100: Highly relevant (directly matches user interests)
-- 40-79: Somewhat relevant (indirectly related to interests)
-- 1-39: Not relevant to interests
-- Consider: title relevance, content match, category alignment
-
-ARTICLES TO SCORE:
-${articles.map((article, index) => 
-  `ARTICLE ${index + 1}
-  TITLE: "${article.title}"
-  CATEGORY: ${article.category}
-  DESCRIPTION: "${article.description}"
-  SOURCE: ${article.source}`
-).join('\n\n')}
-
-REQUIRED FORMAT:
-Return only a JSON array with each object having 'title' and 'score' fields. The title must match exactly:
-[
-  {"title": "Exact Article Title", "score": 85},
-  {"title": "Another Article Title", "score": 45}
-]`
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.1,
-              maxOutputTokens: 2048,
-              topK: 1,
-              topP: 0.1
-            }
-          }
-    
-    console.log('Debug: Sending request to Gemini API...')
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(prompt)
-      }
-    )
-
-    console.log('Gemini API response status:', response.status)
-    
-    if (!response.ok) {
-      console.error('Gemini API error:', response.status, response.statusText)
-      const errorText = await response.text()
-      console.error('Gemini API error details:', errorText)
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-    console.log('Gemini API response data:', JSON.stringify(data, null, 2))
-    
-    const geminiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!geminiResponse) {
-      console.error('Error: No text response from Gemini')
-      console.error('Full response:', JSON.stringify(data, null, 2))
-      throw new Error('No text response from Gemini')
-    }
-
-    try {
-      // Clean up the response and parse JSON
-      const cleanResponse = geminiResponse
-        .replace(/```json\s*|\s*```/g, '') // Remove JSON code blocks
-        .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width spaces
-        .trim()
-      
-      console.log('Cleaned Gemini response:', cleanResponse)
-      
-      const scores = JSON.parse(cleanResponse)
-      
-      if (!Array.isArray(scores)) {
-        throw new Error('Gemini response is not an array')
-      }
-      
-      console.log('Successfully parsed scores:', scores)
-      
-      const scoredArticles = articles.map(article => {
-        const scoreData = scores.find((s: any) => s.title === article.title)
-        if (!scoreData) {
-          console.log(`No score found for article: "${article.title}"`)
-        }
-        return {
-          ...article,
-          ai_score: scoreData ? Math.min(Math.max(scoreData.score, 1), 100) : 75
-        }
-      })
-      
-      // Log distribution of scores
-      const scoreDistribution = scoredArticles.reduce((acc: any, article) => {
-        const range = Math.floor(article.ai_score / 10) * 10
-        acc[`${range}-${range + 9}`] = (acc[`${range}-${range + 9}`] || 0) + 1
-        return acc
-      }, {})
-      
-      console.log('Score distribution:', scoreDistribution)
-      
-      return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75))
-    } catch (parseError) {
-      console.error('Error parsing Gemini response:', parseError)
-      console.error('Raw response:', geminiResponse)
-      throw parseError
-    }
-  } catch (error) {
-    console.error('Error calling Gemini API:', error)
     return articles.map(article => ({ ...article, ai_score: 75 }))
   }
 }
@@ -461,8 +289,7 @@ serve(async (req) => {
       }
     }
 
-    // Use advanced filtering with keywords
-    // Filter articles based on user interests
+    // Use direct filtering approach
     const filteredArticles = await filterNewsByInterests(allArticles, userInterests);
 
     console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
@@ -491,33 +318,6 @@ serve(async (req) => {
         .upsert(articlesToStore, { onConflict: 'user_id,link' })
     }
 
-    // Get the custom interest terms from filtering process
-    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
-    console.log('Custom interests to process:', customInterests);
-    let customTerms = [];
-    
-    if (customInterests.length > 0) {
-      // Get related words for debugging
-      try {
-        const relatedWordsPromises = customInterests.map(interest => 
-          findRelatedWords(interest, getGeminiKey())
-            .catch(error => {
-              console.error(`Error getting related words for ${interest}:`, error);
-              return null;
-            })
-        );
-
-        const relatedWordsList = await Promise.all(relatedWordsPromises);
-        customTerms = customInterests.map((interest, index) => ({
-          interest,
-          terms: relatedWordsList[index]?.terms || [],
-          categories: relatedWordsList[index]?.categories || []
-        })).filter(item => item.terms.length > 0 || item.categories.length > 0);
-      } catch (error) {
-        console.error('Error getting custom interest terms:', error);
-      }
-    }
-
     return new Response(
       JSON.stringify({ 
         articles: personalizedArticles.slice(0, MAX_RETURNED),
@@ -525,6 +325,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+
   } catch (error) {
     console.error('Error in fetch-rss-feeds function:', error)
     return new Response(
