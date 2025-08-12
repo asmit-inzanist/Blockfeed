@@ -85,7 +85,48 @@ const RSS_FEEDS = {
   // Sports Tech
   'SportTechie': 'https://www.sporttechie.com/feed/',
   'Sports Technology Blog': 'https://www.sportstechnologyblog.com/feed/',
-  'Stack Sports': 'https://www.stack.com/feed/'
+  'Stack Sports': 'https://www.stack.com/feed/',
+
+  // Business & Economy
+  'Reuters Business': 'https://www.reutersagency.com/feed/?best-topics=business',
+  'WSJ Business': 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
+  'The Economist': 'https://www.economist.com/business/rss.xml',
+
+  // Automobiles & Mobility
+  'Automotive News': 'https://www.autonews.com/feeds/automotive-news-feeds.xml',
+  'Motor Trend': 'https://www.motortrend.com/feed/',
+  'Electrek': 'https://electrek.co/feed/',
+
+  // Travel & Tourism
+  'Skift': 'https://skift.com/feed/',
+  'Travel Weekly': 'https://www.travelweekly.com/RSS-Feeds/',
+  'Lonely Planet': 'https://www.lonelyplanet.com/blog/feed/',
+
+  // Lifestyle
+  'Lifehacker': 'https://lifehacker.com/rss',
+  'Well+Good': 'https://www.wellandgood.com/feed/',
+  'MindBodyGreen': 'https://www.mindbodygreen.com/rss',
+
+  // Environment
+  'EcoWatch': 'https://www.ecowatch.com/feeds/news.rss',
+  'GreenBiz': 'https://www.greenbiz.com/rss.xml',
+  'CleanTechnica': 'https://cleantechnica.com/feed/',
+
+  // Education
+  'EdSurge': 'https://www.edsurge.com/feeds/rss',
+  'Chronicle': 'https://www.chronicle.com/feed',
+  'Inside Higher Ed': 'https://www.insidehighered.com/feed',
+
+  // Law & Crime
+  'Law.com': 'https://www.law.com/feed/',
+  'Above the Law': 'https://abovethelaw.com/feed/',
+  'JD Supra': 'https://www.jdsupra.com/rss/',
+
+  // Tech Gadgets & Reviews
+  'CNET': 'https://www.cnet.com/rss/all/',
+  'Engadget': 'https://www.engadget.com/rss.xml',
+  'Gizmodo': 'https://gizmodo.com/rss',
+  'TechRadar': 'https://www.techradar.com/rss'
 }
 
 function parseRSSFeed(xmlText: string, source: string): Article[] {
@@ -126,7 +167,14 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
   
-  // Health category check moved to top priority
+  // Business & Economy
+  if (sourceLower.includes('business') || 
+      sourceLower.includes('economy') || 
+      sourceLower.includes('wsj') ||
+      sourceLower.includes('reuters') ||
+      sourceLower.includes('economist')) return 'Business & Economy'
+  
+  // Health category
   if (sourceLower.includes('medical') || 
       sourceLower.includes('health') || 
       sourceLower.includes('healthcare') ||
@@ -166,6 +214,42 @@ function getCategoryFromSource(source: string): string {
   
   if (sourceLower.includes('world') || sourceLower.includes('bbc') || 
       sourceLower.includes('nbc')) return 'World News'
+      
+  // New Categories
+  if (sourceLower.includes('auto') || 
+      sourceLower.includes('motor') || 
+      sourceLower.includes('car') ||
+      sourceLower.includes('electrek')) return 'Automobiles & Mobility'
+      
+  if (sourceLower.includes('travel') || 
+      sourceLower.includes('tourism') ||
+      sourceLower.includes('skift') ||
+      sourceLower.includes('lonely planet')) return 'Travel & Tourism'
+      
+  if (sourceLower.includes('lifestyle') ||
+      sourceLower.includes('lifehacker') ||
+      sourceLower.includes('well') ||
+      sourceLower.includes('mindbody')) return 'Lifestyle'
+      
+  if (sourceLower.includes('environment') ||
+      sourceLower.includes('eco') ||
+      sourceLower.includes('green') ||
+      sourceLower.includes('cleantech')) return 'Environment'
+      
+  if (sourceLower.includes('education') ||
+      sourceLower.includes('edsurge') ||
+      sourceLower.includes('chronicle') ||
+      sourceLower.includes('higher ed')) return 'Education'
+      
+  if (sourceLower.includes('law') ||
+      sourceLower.includes('legal') ||
+      sourceLower.includes('crime') ||
+      sourceLower.includes('jdsupra')) return 'Law & Crime'
+      
+  if (sourceLower.includes('gadget') ||
+      sourceLower.includes('cnet') ||
+      sourceLower.includes('engadget') ||
+      sourceLower.includes('gizmodo')) return 'Tech Gadgets & Reviews'
   
   return 'General'
 }
@@ -173,7 +257,8 @@ function getCategoryFromSource(source: string): string {
 function getKeywordsForCategory(category: string): string[] {
   const keywordMap: Record<string, string[]> = {
       'Technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
-    'Finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
+    'Business & Economy': ['business', 'economy', 'market', 'industry', 'trade', 'commerce', 'corporate', 'gdp', 'economic growth', 'inflation', 'employment', 'manufacturing', 'retail', 'wholesale', 'sector'],
+    'Finance': ['finance', 'stock', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'financial', 'money', 'forex', 'bonds', 'securities', 'hedge fund'],
     'Sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
     'Politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
     'Health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
@@ -185,7 +270,22 @@ function getKeywordsForCategory(category: string): string[] {
     'Startups': ['startup', 'entrepreneur', 'venture capital', 'funding', 'seed round', 'innovation', 'tech startup', 'startup ecosystem', 'incubator', 'accelerator', 'business model', 'unicorn', 'startup founder'],
     'Gaming': ['gaming', 'video games', 'esports', 'game development', 'console gaming', 'pc gaming', 'mobile gaming', 'game industry', 'game technology', 'virtual reality', 'augmented reality', 'gaming hardware'],
     'Cybersecurity': ['cybersecurity', 'security', 'hacking', 'cyber attack', 'data breach', 'privacy', 'encryption', 'network security', 'information security', 'cyber defense', 'security technology', 'cyber threats'],
-    'Business Tech': ['enterprise technology', 'business software', 'cloud computing', 'digital transformation', 'saas', 'enterprise solutions', 'business intelligence', 'data analytics', 'productivity tools', 'business automation']
+    'Business Tech': ['enterprise technology', 'business software', 'cloud computing', 'digital transformation', 'saas', 'enterprise solutions', 'business intelligence', 'data analytics', 'productivity tools', 'business automation'],
+    'Automobiles & Mobility': ['automotive', 'cars', 'electric vehicles', 'ev', 'autonomous driving', 'mobility', 'transportation', 'vehicles', 'auto industry', 'motorcycles', 'bikes', 'automobile', 'tesla', 'charging'],
+    'Travel & Tourism': ['travel', 'tourism', 'vacation', 'holiday', 'hotel', 'resort', 'airline', 'destination', 'flight', 'booking', 'hospitality', 'tourist', 'adventure', 'accommodation'],
+    'Lifestyle': ['lifestyle', 'fashion', 'beauty', 'wellness', 'food', 'dining', 'recipes', 'home', 'decor', 'fitness', 'relationships', 'self-care', 'trends', 'luxury'],
+    'Environment': ['environment', 'climate change', 'sustainability', 'renewable energy', 'green technology', 'conservation', 'pollution', 'recycling', 'eco-friendly', 'biodiversity', 'carbon emissions'],
+    'Weather': ['weather', 'forecast', 'climate', 'temperature', 'precipitation', 'storm', 'meteorology', 'hurricane', 'rainfall', 'atmospheric', 'weather report'],
+    'Education': ['education', 'learning', 'school', 'university', 'college', 'academic', 'student', 'teaching', 'curriculum', 'classroom', 'e-learning', 'degree', 'training'],
+    'Law & Crime': ['law', 'legal', 'crime', 'court', 'justice', 'police', 'criminal', 'investigation', 'arrest', 'trial', 'lawsuit', 'verdict', 'prosecution', 'rights'],
+    'Religion & Spirituality': ['religion', 'faith', 'spiritual', 'belief', 'worship', 'prayer', 'meditation', 'religious', 'church', 'temple', 'mosque', 'divine', 'sacred'],
+    'Opinion & Editorial': ['opinion', 'editorial', 'commentary', 'analysis', 'perspective', 'viewpoint', 'column', 'op-ed', 'debate', 'discussion', 'critique', 'review'],
+    'Obituaries & Milestones': ['obituary', 'death', 'memorial', 'tribute', 'remembrance', 'legacy', 'milestone', 'achievement', 'anniversary', 'commemoration'],
+    'Arts & Culture': ['art', 'culture', 'museum', 'gallery', 'exhibition', 'theater', 'dance', 'music', 'literature', 'poetry', 'sculpture', 'painting', 'heritage', 'festival'],
+    'Horoscopes & Astrology': ['horoscope', 'astrology', 'zodiac', 'star sign', 'planetary', 'constellation', 'fortune', 'prediction', 'cosmic', 'astrological', 'natal chart'],
+    'Comics & Puzzles': ['comics', 'puzzle', 'crossword', 'sudoku', 'games', 'cartoons', 'riddles', 'brain teasers', 'word games', 'comic strip', 'manga'],
+    'Classifieds/Jobs': ['jobs', 'career', 'employment', 'hiring', 'recruitment', 'vacancy', 'job listing', 'classifieds', 'job market', 'position', 'opportunity'],
+    'Tech Gadgets & Reviews': ['gadgets', 'devices', 'tech review', 'consumer tech', 'electronics', 'smartphone', 'laptop', 'wearable', 'tablet', 'headphones', 'smart home']
   }
   return keywordMap[category.toLowerCase()] || []
 }
@@ -242,14 +342,25 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
     // Debug log for article processing
     console.log(`Processing article: "${article.title}" (Category: ${category})`);
     
-    // Check category match first
-    const categoryMatch = processedInterests.some(interest => {
-      const match = category.toLowerCase() === interest.toLowerCase();
-      if (match) console.log(`Category match found: ${category} matches interest ${interest}`);
-      return match;
-    });
+    // For each interest, try to map it to a main category if it's custom
+    for (const interest of processedInterests) {
+      // First check direct category match
+      if (category.toLowerCase() === interest.toLowerCase()) {
+        console.log(`Direct category match found: ${category} matches interest ${interest}`);
+        return true;
+      }
+      
+      // Try mapping custom interest to main category
+      const mappedCategory = mapCustomInterestToMainCategory(interest);
+      if (mappedCategory) {
+        console.log(`Mapped custom interest "${interest}" to category "${mappedCategory}"`);
+        if (category.toLowerCase() === mappedCategory.toLowerCase()) {
+          console.log(`Mapped category match found: ${category} matches mapped interest ${mappedCategory}`);
+          return true;
+        }
+      }
+    }
     
-    if (categoryMatch) return true;
     
     // Check keyword matches
     const keywordMatch = keywordSets.some(keywords => {
@@ -263,7 +374,7 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
       return false;
     });
     
-    return categoryMatch || keywordMatch;
+    return keywordMatch;
   });
 
   // Add debug information
