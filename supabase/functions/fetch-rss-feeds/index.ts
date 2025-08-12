@@ -4,7 +4,7 @@ import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config.
 import { Article } from './types.ts'
 import { filterArticlesForCustomInterest } from './directFilter.ts'
 import { removeDuplicateArticles, mapCustomInterestToMainCategory } from './utils.ts'
-import { scoreArticles } from './gemini.ts'
+import { scoreArticles, mapInterestToCategories } from './gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -341,25 +341,39 @@ serve(async (req) => {
         .maybeSingle()
 
       if (preferences) {
-        // Process custom interests and map them to main categories if possible
-        const mappedInterests = new Set<string>();
+        // Process interests
+        const processedInterests = new Set<string>();
         
-        // Add predefined interests
-        preferences.interests?.forEach(interest => mappedInterests.add(interest));
+        // Add predefined interests directly
+        preferences.interests?.forEach(interest => processedInterests.add(interest));
         
-        // Map custom interests to main categories where possible
-        preferences.custom_interests?.forEach(customInterest => {
-          const mappedCategory = mapCustomInterestToMainCategory(customInterest);
-          if (mappedCategory) {
-            mappedInterests.add(mappedCategory);
-            console.log(`Mapped custom interest "${customInterest}" to category "${mappedCategory}"`);
-          } else {
-            // If no mapping found, keep the custom interest as is
-            mappedInterests.add(customInterest);
+        // Process custom interests using Gemini
+        if (preferences.custom_interests?.length) {
+          const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+          if (geminiApiKey) {
+            for (const customInterest of preferences.custom_interests) {
+              try {
+                // Get category mappings from Gemini
+                const mappedCategories = await mapInterestToCategories(customInterest, geminiApiKey);
+                
+                if (mappedCategories.length > 0) {
+                  // Add mapped categories for filtering
+                  mappedCategories.forEach(category => processedInterests.add(category));
+                  console.log(`Gemini mapped "${customInterest}" to categories:`, mappedCategories);
+                } else {
+                  // If no mapping found, keep the custom interest as is
+                  processedInterests.add(customInterest);
+                  console.log(`No category mapping found for "${customInterest}"`);
+                }
+              } catch (error) {
+                console.error(`Error processing custom interest "${customInterest}":`, error);
+                processedInterests.add(customInterest);
+              }
+            }
           }
-        });
+        }
 
-        const combined = Array.from(mappedInterests);
+        const combined = Array.from(processedInterests);
         if (combined.length > 0) userInterests = combined;
       }
     }
@@ -441,9 +455,21 @@ serve(async (req) => {
       INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
     );
 
+    // Preserve original custom interests in article labels
+    const labeledArticles = personalizedArticles.map(article => {
+      if (requestedInterests?.length === 1 && !PREDEFINED_INTERESTS.has(requestedInterests[0])) {
+        // If there's exactly one custom interest, use it as the label
+        return {
+          ...article,
+          displayCategory: requestedInterests[0] // Original custom interest as display category
+        };
+      }
+      return article;
+    });
+
     return new Response(
       JSON.stringify({ 
-        articles: personalizedArticles.slice(0, MAX_RETURNED),
+        articles: labeledArticles.slice(0, MAX_RETURNED),
         interests: userInterests,
         debug: {
           totalFetched: allArticles.length,

@@ -114,6 +114,53 @@ export async function callGemini(
 throw lastError || new Error('All Gemini models failed');
 }
 
+export async function mapInterestToCategories(
+  customInterest: string,
+  apiKey: string
+): Promise<string[]> {
+  const prompt = `Given the user's custom interest "${customInterest}", determine which of these main categories it belongs to. Only return category names that are HIGHLY relevant, separated by commas. If none are relevant, return "NONE".
+
+Available categories:
+- Technology (tech, software, digital, etc.)
+- Finance (business, economy, markets, etc.)
+- Sports (athletics, games, competition, etc.)
+- Politics (government, policy, etc.)
+- Health (medical, healthcare, wellness, etc.)
+- Entertainment (media, movies, shows, etc.)
+- Science (research, discovery, etc.)
+- World News (international, global affairs, etc.)
+- AI & ML (artificial intelligence, machine learning, etc.)
+- Startups (entrepreneurship, new businesses, etc.)
+- Gaming (video games, esports, etc.)
+- Cybersecurity (security, hacking, privacy, etc.)
+- Business Tech (enterprise software, business solutions, etc.)
+
+Example responses:
+- For "machine learning": AI & ML, Technology
+- For "hospital": Health
+- For "blockchain": Technology, Finance
+- For "random123": NONE`;
+
+  try {
+    const response = await callGemini(apiKey, prompt, {
+      temperature: 0.1, // Low temperature for consistent results
+      maxOutputTokens: 100
+    });
+
+    // Parse the response
+    const categories = response
+      .split(',')
+      .map(cat => cat.trim())
+      .filter(cat => cat !== 'NONE' && cat.length > 0);
+
+    console.log(`Gemini mapped "${customInterest}" to categories:`, categories);
+    return categories;
+  } catch (error) {
+    console.error('Error mapping interest to categories:', error);
+    return [];
+  }
+}
+
 export async function findRelatedWords(
   interest: string,
   apiKey: string
