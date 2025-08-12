@@ -1,6 +1,29 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "version": 2,
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/auth",
+      "dest": "/"
+    },
+    {
+      "src": "/account",
+      "dest": "/"
+    },
+    {
+      "src": "/todays-feeds",
+      "dest": "/"
+    },
+    {
+      "src": "/features",
+      "dest": "/"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
   ],
   "headers": [
     {
