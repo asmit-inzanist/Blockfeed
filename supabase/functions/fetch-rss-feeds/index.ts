@@ -25,6 +25,13 @@ const RSS_FEEDS = {
   'VentureBeat': 'https://venturebeat.com/feed/',
   'MIT Technology Review': 'https://www.technologyreview.com/feed/',
   'Digital Trends': 'https://www.digitaltrends.com/feed/',
+  'ReadWrite': 'https://readwrite.com/feed/',
+  'SlashDot': 'http://rss.slashdot.org/Slashdot/slashdotMain',
+  'TechSpot': 'https://www.techspot.com/backend.xml',
+  'Mashable Tech': 'https://mashable.com/feeds/rss/tech',
+  'AnandTech': 'https://www.anandtech.com/rss/',
+  'The Next Web': 'https://thenextweb.com/feed/',
+  'The Register': 'https://www.theregister.com/headlines.atom',
   
   // AI & ML
   'AI News': 'https://artificialintelligence-news.com/feed/',
