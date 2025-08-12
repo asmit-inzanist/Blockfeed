@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
 
 interface InterestsSelectorProps {
   interests: string[];
@@ -30,6 +32,26 @@ const PREDEFINED_INTERESTS = [
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(interests);
+  const [customInterest, setCustomInterest] = useState('');
+  const { toast } = useToast();
+
+  const handleSendSuggestion = async () => {
+    try {
+      // Here you can implement the actual logic to send the suggestion
+      // For now, we'll just show a success message
+      toast({
+        title: "Thank you for your suggestion!",
+        description: "We've received your topic suggestion and will review it soon.",
+      });
+      setCustomInterest('');
+    } catch (error) {
+      toast({
+        title: "Something went wrong",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddInterest = (interest: string) => {
     if (!selectedInterests.includes(interest)) {
@@ -127,18 +149,25 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
             </div>
           </div>
 
-          {/* Suggestion Message */}
-          <div className="border rounded-md p-4 bg-muted/30">
-            <h4 className="text-sm font-medium mb-2">Want to suggest a topic?</h4>
-            <p className="text-sm text-muted-foreground">
-              If you'd like to suggest a new topic or interest to be added to our feed, please email your suggestions to{' '}
-              <a 
-                href="mailto:asmitgoswami27@gmail.com" 
-                className="text-primary hover:underline"
+          {/* Topic Suggestion Form */}
+          <div>
+            <h4 className="text-sm font-medium mb-3">Want to suggest a topic?</h4>
+            <div className="space-y-4">
+              <Textarea 
+                placeholder="Tell us what topics you'd like to see in your feed..."
+                className="min-h-[100px] resize-none"
+                value={customInterest}
+                onChange={(e) => setCustomInterest(e.target.value)}
+              />
+              <Button 
+                className="w-full" 
+                onClick={handleSendSuggestion}
+                disabled={!customInterest.trim()}
               >
-                asmitgoswami27@gmail.com
-              </a>
-            </p>
+                <Send className="w-4 h-4 mr-2" />
+                Send Suggestion
+              </Button>
+            </div>
           </div>
 
           {/* Action Buttons */}
