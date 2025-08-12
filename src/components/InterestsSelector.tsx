@@ -11,8 +11,29 @@ interface InterestsSelectorProps {
 }
 
 const PREDEFINED_INTERESTS = [
+  // Core Categories
   'Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News',
-  'AI & ML', 'Startups', 'Gaming', 'Cybersecurity', 'Business Tech'
+  
+  // Tech & Business
+  'AI & ML', 'Startups', 'Gaming', 'Cybersecurity', 'Business Tech', 'Business & Economy', 'Tech Gadgets & Reviews',
+  
+  // Lifestyle & Culture
+  'Arts & Culture', 'Lifestyle', 'Travel & Tourism', 
+  
+  // Transportation
+  'Automobiles & Mobility',
+  
+  // Environment & Weather
+  'Environment', 'Weather',
+  
+  // Education & Career
+  'Education', 'Classifieds/Jobs',
+  
+  // Law & Society
+  'Law & Crime', 'Religion & Spirituality',
+  
+  // Media & Entertainment
+  'Opinion & Editorial', 'Comics & Puzzles', 'Horoscopes & Astrology', 'Obituaries & Milestones'
 ];
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {

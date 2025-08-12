@@ -7,77 +7,118 @@ export function getGeminiKey(): string {
 }
 
 export const INTEREST_KEYWORDS = {
-  // Main Categories
+  // Core Categories
   'Technology': [
     'tech', 'software', 'ai', 'artificial intelligence', 'digital', 'startup', 'app',
     'innovation', 'cybersecurity', 'computer', 'internet', 'cloud', 'mobile',
     'programming', 'blockchain', 'machine learning', 'robotics', 'automation'
   ],
-  'Finance': [
-    'finance', 'business', 'market', 'investment', 'stock', 'economy', 'banking',
-    'trading', 'cryptocurrency', 'bitcoin', 'fintech', 'venture capital', 'startup funding',
-    'economic growth', 'market analysis', 'financial technology'
+  'Finance': ['finance', 'stock', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 
+    'revenue', 'profit', 'financial', 'money', 'forex', 'bonds', 'securities', 'hedge fund'
   ],
-  'Sports': [
-    'sports', 'football', 'cricket', 'basketball', 'tennis', 'soccer', 'olympics',
-    'tournament', 'championship', 'athlete', 'game', 'match', 'team', 'league',
-    'racing', 'fitness', 'esports', 'sports technology'
+  'Sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 
+    'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'
   ],
-  'Politics': [
-    'politics', 'government', 'election', 'policy', 'political', 'democracy',
-    'parliament', 'congress', 'legislation', 'law', 'diplomacy', 'minister',
-    'president', 'campaign', 'voting', 'political party'
+  'Politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 
+    'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'
   ],
-  'Health': [
-    'health', 'medical', 'healthcare', 'medicine', 'wellness', 'fitness', 'nutrition',
-    'mental health', 'disease', 'treatment', 'research', 'hospital', 'doctors',
-    'pharmaceutical', 'biotech', 'health technology', 'physician', 'clinic', 'nursing',
-    'dental', 'pharmacy', 'surgery', 'diagnosis', 'medical care', 'healthcare provider',
-    'telemedicine', 'medical research', 'medtech', 'digital health', 'medical device',
-    'health tech', 'medical technology', 'healthtech', 'therapeutic', 'medical science',
-    'health innovation', 'patient care', 'clinical', 'medical news', 'health industry'
+  'Health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 
+    'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'
   ],
-  'Entertainment': [
-    'entertainment', 'movie', 'film', 'music', 'celebrity', 'tv', 'television',
-    'streaming', 'hollywood', 'show', 'media', 'gaming', 'arts', 'culture',
-    'performance', 'concert', 'theater'
+  'Entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 
+    'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'
   ],
-  'Science': [
-    'science', 'research', 'discovery', 'innovation', 'technology', 'experiment',
-    'study', 'breakthrough', 'space', 'physics', 'chemistry', 'biology', 'astronomy',
-    'environmental', 'climate', 'scientific', 'laboratory'
+  'Science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 
+    'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'
   ],
-  'World News': [
-    'world', 'international', 'global', 'foreign', 'diplomatic', 'world affairs',
-    'geopolitics', 'international relations', 'trade', 'world economy', 'global issues',
-    'international policy', 'world politics', 'global events'
+  'World News': ['international', 'global', 'world', 'country', 'nation', 'foreign', 
+    'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis'
   ],
 
-  // Tech Sub-Categories
-  'AI & ML': [
-    'artificial intelligence', 'machine learning', 'deep learning', 'neural networks',
-    'ai models', 'nlp', 'computer vision', 'ai research', 'robotics', 'automation',
+  // Tech & Business
+  'Business & Economy': ['business', 'economy', 'market', 'industry', 'trade', 'commerce', 
+    'corporate', 'gdp', 'economic growth', 'inflation', 'employment', 'manufacturing', 
+    'retail', 'wholesale', 'sector'
+  ],
+  'AI & ML': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 
+    'ai models', 'nlp', 'computer vision', 'ai research', 'robotics', 'automation', 
     'data science', 'algorithms', 'ai applications'
   ],
-  'Startups': [
-    'startup', 'entrepreneur', 'venture capital', 'funding', 'seed round',
-    'innovation', 'tech startup', 'startup ecosystem', 'incubator', 'accelerator',
+  'Startups': ['startup', 'entrepreneur', 'venture capital', 'funding', 'seed round', 
+    'innovation', 'tech startup', 'startup ecosystem', 'incubator', 'accelerator', 
     'business model', 'unicorn', 'startup founder'
   ],
-  'Gaming': [
-    'gaming', 'video games', 'esports', 'game development', 'console gaming',
-    'pc gaming', 'mobile gaming', 'game industry', 'game technology',
-    'virtual reality', 'augmented reality', 'gaming hardware'
+  'Gaming': ['gaming', 'video games', 'esports', 'game development', 'console gaming', 
+    'pc gaming', 'mobile gaming', 'game industry', 'game technology', 'virtual reality', 
+    'augmented reality', 'gaming hardware'
   ],
-  'Cybersecurity': [
-    'cybersecurity', 'security', 'hacking', 'cyber attack', 'data breach',
-    'privacy', 'encryption', 'network security', 'information security',
-    'cyber defense', 'security technology', 'cyber threats'
+  'Cybersecurity': ['cybersecurity', 'security', 'hacking', 'cyber attack', 'data breach', 
+    'privacy', 'encryption', 'network security', 'information security', 'cyber defense', 
+    'security technology', 'cyber threats'
   ],
-  'Business Tech': [
-    'enterprise technology', 'business software', 'cloud computing', 'digital transformation',
-    'saas', 'enterprise solutions', 'business intelligence', 'data analytics',
-    'productivity tools', 'business automation'
+  'Business Tech': ['enterprise technology', 'business software', 'cloud computing', 
+    'digital transformation', 'saas', 'enterprise solutions', 'business intelligence', 
+    'data analytics', 'productivity tools', 'business automation'
+  ],
+  'Tech Gadgets & Reviews': ['gadgets', 'devices', 'tech review', 'consumer tech', 
+    'electronics', 'smartphone', 'laptop', 'wearable', 'tablet', 'headphones', 'smart home'
+  ],
+
+  // Lifestyle & Culture
+  'Arts & Culture': ['art', 'culture', 'museum', 'gallery', 'exhibition', 'theater', 
+    'dance', 'music', 'literature', 'poetry', 'sculpture', 'painting', 'heritage', 'festival'
+  ],
+  'Lifestyle': ['lifestyle', 'fashion', 'beauty', 'wellness', 'food', 'dining', 'recipes', 
+    'home', 'decor', 'fitness', 'relationships', 'self-care', 'trends', 'luxury'
+  ],
+  'Travel & Tourism': ['travel', 'tourism', 'vacation', 'holiday', 'hotel', 'resort', 
+    'airline', 'destination', 'flight', 'booking', 'hospitality', 'tourist', 'adventure', 
+    'accommodation'
+  ],
+
+  // Transportation
+  'Automobiles & Mobility': ['automotive', 'cars', 'electric vehicles', 'ev', 
+    'autonomous driving', 'mobility', 'transportation', 'vehicles', 'auto industry', 
+    'motorcycles', 'bikes', 'automobile', 'tesla', 'charging'
+  ],
+
+  // Environment & Weather
+  'Environment': ['environment', 'climate change', 'sustainability', 'renewable energy', 
+    'green technology', 'conservation', 'pollution', 'recycling', 'eco-friendly', 
+    'biodiversity', 'carbon emissions'
+  ],
+  'Weather': ['weather', 'forecast', 'climate', 'temperature', 'precipitation', 'storm', 
+    'meteorology', 'hurricane', 'rainfall', 'atmospheric', 'weather report'
+  ],
+
+  // Education & Career
+  'Education': ['education', 'learning', 'school', 'university', 'college', 'academic', 
+    'student', 'teaching', 'curriculum', 'classroom', 'e-learning', 'degree', 'training'
+  ],
+  'Classifieds/Jobs': ['jobs', 'career', 'employment', 'hiring', 'recruitment', 'vacancy', 
+    'job listing', 'classifieds', 'job market', 'position', 'opportunity'
+  ],
+
+  // Law & Society
+  'Law & Crime': ['law', 'legal', 'crime', 'court', 'justice', 'police', 'criminal', 
+    'investigation', 'arrest', 'trial', 'lawsuit', 'verdict', 'prosecution', 'rights'
+  ],
+  'Religion & Spirituality': ['religion', 'faith', 'spiritual', 'belief', 'worship', 
+    'prayer', 'meditation', 'religious', 'church', 'temple', 'mosque', 'divine', 'sacred'
+  ],
+
+  // Media & Entertainment
+  'Opinion & Editorial': ['opinion', 'editorial', 'commentary', 'analysis', 'perspective', 
+    'viewpoint', 'column', 'op-ed', 'debate', 'discussion', 'critique', 'review'
+  ],
+  'Obituaries & Milestones': ['obituary', 'death', 'memorial', 'tribute', 'remembrance', 
+    'legacy', 'milestone', 'achievement', 'anniversary', 'commemoration'
+  ],
+  'Horoscopes & Astrology': ['horoscope', 'astrology', 'zodiac', 'star sign', 'planetary', 
+    'constellation', 'fortune', 'prediction', 'cosmic', 'astrological', 'natal chart'
+  ],
+  'Comics & Puzzles': ['comics', 'puzzle', 'crossword', 'sudoku', 'games', 'cartoons', 
+    'riddles', 'brain teasers', 'word games', 'comic strip', 'manga'
   ]
 } as const;
 

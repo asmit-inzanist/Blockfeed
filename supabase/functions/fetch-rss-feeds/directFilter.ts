@@ -70,7 +70,17 @@ async function getGeminiSuggestions(interest: string, apiKey: string): Promise<s
   const prompt = {
     contents: [{
       parts: [{
-        text: `Given the interest "${interest}", provide 5-8 closely related keywords for news filtering. Format: one word or short phrase per line, no numbers or bullets. Keep it concise and relevant.`
+        text: `You are a news filtering expert. Given the custom interest "${interest}", generate relevant keywords for finding news articles. Consider:
+
+1. Direct terms and their variations
+2. Related technologies or tools
+3. Key companies or organizations
+4. Industry-specific terms
+5. Common abbreviations or acronyms
+
+Format your response as a simple list, one term per line. Return only the most relevant 10-15 terms that would appear in news headlines or article content.
+
+Be specific and focus on terms that would actually appear in news articles. Include both technical and non-technical terms.`
       }]
     }],
     generationConfig: {
@@ -187,20 +197,6 @@ export async function getExpandedKeywords(interest: string): Promise<{ keywords:
       ai: Array.from(aiKeywords)
     }
   };
-  
-  // Add common variations
-  const words = interest.toLowerCase().split(/\s+/);
-  words.forEach(word => {
-    keywords.add(word);
-    // Add common prefixes/suffixes
-    keywords.add(word + 's');  // plural
-    keywords.add(word + 'ing');  // gerund
-    if (word.endsWith('y')) {
-      keywords.add(word.slice(0, -1) + 'ies');  // y -> ies plural
-    }
-  });
-
-  return Array.from(keywords);
 }
 
 function calculateArticleScore(
@@ -283,7 +279,7 @@ export async function filterArticlesForCustomInterest(
   });
 
   // Filter articles with scores above threshold and sort by score
-  const MIN_SCORE = 10; // Lowered threshold for better matching
+  const MIN_SCORE = 5; // Very low threshold for custom interests to ensure we catch relevant articles
   const filteredArticles = scoredArticles
     .filter(article => article.relevanceScore >= MIN_SCORE)
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
