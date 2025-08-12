@@ -29,7 +29,6 @@ const PREDEFINED_INTERESTS = [
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [customInterest, setCustomInterest] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>(interests);
 
   const handleAddInterest = (interest: string) => {
@@ -42,13 +41,6 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
     setSelectedInterests(selectedInterests.filter(i => i !== interest));
   };
 
-  const handleAddCustomInterest = () => {
-    if (customInterest.trim() && !selectedInterests.includes(customInterest.trim())) {
-      handleAddInterest(customInterest.trim());
-      setCustomInterest('');
-    }
-  };
-
   const handleSave = () => {
     onInterestsChange(selectedInterests);
     setIsOpen(false);
@@ -56,7 +48,6 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
 
   const handleCancel = () => {
     setSelectedInterests(interests);
-    setCustomInterest('');
     setIsOpen(false);
   };
 
@@ -136,20 +127,18 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
             </div>
           </div>
 
-          {/* Custom Interest Input */}
-          <div>
-            <h4 className="text-sm font-medium mb-3">Add Custom Interest</h4>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter a custom interest..."
-                value={customInterest}
-                onChange={(e) => setCustomInterest(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddCustomInterest()}
-              />
-              <Button onClick={handleAddCustomInterest} size="sm">
-                Add
-              </Button>
-            </div>
+          {/* Suggestion Message */}
+          <div className="border rounded-md p-4 bg-muted/30">
+            <h4 className="text-sm font-medium mb-2">Want to suggest a topic?</h4>
+            <p className="text-sm text-muted-foreground">
+              If you'd like to suggest a new topic or interest to be added to our feed, please email your suggestions to{' '}
+              <a 
+                href="mailto:asmitgoswami27@gmail.com" 
+                className="text-primary hover:underline"
+              >
+                asmitgoswami27@gmail.com
+              </a>
+            </p>
           </div>
 
           {/* Action Buttons */}
