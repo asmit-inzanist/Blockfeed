@@ -1,4 +1,4 @@
-import { Article } from './types.ts';
+import { Article } from './types';
 
 interface KeywordSource {
   predefined: string[];
@@ -133,7 +133,7 @@ async function findSimilarTopics(interest: string): Promise<string[]> {
   return matchingTopics;
 }
 
-export async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
+async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
   const predefinedKeywords = new Set<string>();
   const aiKeywords = new Set<string>();
   const commonVariations = new Set<string>();
@@ -187,6 +187,20 @@ export async function getExpandedKeywords(interest: string): Promise<{ keywords:
       ai: Array.from(aiKeywords)
     }
   };
+  
+  // Add common variations
+  const words = interest.toLowerCase().split(/\s+/);
+  words.forEach(word => {
+    keywords.add(word);
+    // Add common prefixes/suffixes
+    keywords.add(word + 's');  // plural
+    keywords.add(word + 'ing');  // gerund
+    if (word.endsWith('y')) {
+      keywords.add(word.slice(0, -1) + 'ies');  // y -> ies plural
+    }
+  });
+
+  return Array.from(keywords);
 }
 
 function calculateArticleScore(

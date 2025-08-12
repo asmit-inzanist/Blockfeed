@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config.ts'
-import { Article } from './types.ts'
-import { filterArticlesForCustomInterest, getExpandedKeywords } from './directFilter.ts'
-import { removeDuplicateArticles } from './utils.ts'
-import { scoreArticles } from './gemini.ts'
+import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config'
+import { Article } from './types'
+import { filterArticlesForCustomInterest, getExpandedKeywords } from './directFilter'
+import { removeDuplicateArticles } from './utils'
+import { scoreArticles } from './gemini'
 
     if (customInterests.length > 0) {
       try {
@@ -24,6 +24,10 @@ import { scoreArticles } from './gemini.ts'
         console.error('Error getting keywords:', error);
       }
     }
+
+    // Use direct filtering approachfrom './directFilter'
+import { removeDuplicateArticles } from './utils'
+import { scoreArticles } from './gemini'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -459,8 +463,8 @@ serve(async (req) => {
     const customInterests = userInterests.filter(i => 
       !PREDEFINED_INTERESTS.includes(i as typeof PREDEFINED_INTERESTS[number])
     );
-    let debugKeywords: string[] | null = null;
-    let debugKeywordSource: { predefined: string[]; ai: string[] } | null = null;
+    let debugKeywords = null;
+    let debugKeywordSource = null;
 
     if (customInterests.length > 0) {
       try {

@@ -1,5 +1,5 @@
-import { Article } from './types.ts';
-import { getGeminiKey } from './config.ts';
+import { Article } from './types';
+import { getGeminiKey } from './config';
 
 interface RelatedWords {
   terms: string[];
