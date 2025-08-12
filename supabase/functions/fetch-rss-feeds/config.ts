@@ -60,65 +60,24 @@ export const INTEREST_KEYWORDS = {
     'digital transformation', 'saas', 'enterprise solutions', 'business intelligence', 
     'data analytics', 'productivity tools', 'business automation'
   ],
-  'Tech Gadgets & Reviews': ['gadgets', 'devices', 'tech review', 'consumer tech', 
-    'electronics', 'smartphone', 'laptop', 'wearable', 'tablet', 'headphones', 'smart home'
-  ],
 
-  // Lifestyle & Culture
+  // Culture & Transportation
   'Arts & Culture': ['art', 'culture', 'museum', 'gallery', 'exhibition', 'theater', 
     'dance', 'music', 'literature', 'poetry', 'sculpture', 'painting', 'heritage', 'festival'
   ],
-  'Lifestyle': ['lifestyle', 'fashion', 'beauty', 'wellness', 'food', 'dining', 'recipes', 
-    'home', 'decor', 'fitness', 'relationships', 'self-care', 'trends', 'luxury'
-  ],
-  'Travel & Tourism': ['travel', 'tourism', 'vacation', 'holiday', 'hotel', 'resort', 
-    'airline', 'destination', 'flight', 'booking', 'hospitality', 'tourist', 'adventure', 
-    'accommodation'
-  ],
-
-  // Transportation
   'Automobiles & Mobility': ['automotive', 'cars', 'electric vehicles', 'ev', 
     'autonomous driving', 'mobility', 'transportation', 'vehicles', 'auto industry', 
     'motorcycles', 'bikes', 'automobile', 'tesla', 'charging'
   ],
 
-  // Environment & Weather
-  'Environment': ['environment', 'climate change', 'sustainability', 'renewable energy', 
-    'green technology', 'conservation', 'pollution', 'recycling', 'eco-friendly', 
-    'biodiversity', 'carbon emissions'
-  ],
-  'Weather': ['weather', 'forecast', 'climate', 'temperature', 'precipitation', 'storm', 
-    'meteorology', 'hurricane', 'rainfall', 'atmospheric', 'weather report'
-  ],
-
-  // Education & Career
-  'Education': ['education', 'learning', 'school', 'university', 'college', 'academic', 
-    'student', 'teaching', 'curriculum', 'classroom', 'e-learning', 'degree', 'training'
-  ],
+  // Career
   'Classifieds/Jobs': ['jobs', 'career', 'employment', 'hiring', 'recruitment', 'vacancy', 
     'job listing', 'classifieds', 'job market', 'position', 'opportunity'
   ],
 
-  // Law & Society
-  'Law & Crime': ['law', 'legal', 'crime', 'court', 'justice', 'police', 'criminal', 
-    'investigation', 'arrest', 'trial', 'lawsuit', 'verdict', 'prosecution', 'rights'
-  ],
-  'Religion & Spirituality': ['religion', 'faith', 'spiritual', 'belief', 'worship', 
-    'prayer', 'meditation', 'religious', 'church', 'temple', 'mosque', 'divine', 'sacred'
-  ],
-
-  // Media & Entertainment
-  'Opinion & Editorial': ['opinion', 'editorial', 'commentary', 'analysis', 'perspective', 
-    'viewpoint', 'column', 'op-ed', 'debate', 'discussion', 'critique', 'review'
-  ],
-  'Obituaries & Milestones': ['obituary', 'death', 'memorial', 'tribute', 'remembrance', 
-    'legacy', 'milestone', 'achievement', 'anniversary', 'commemoration'
-  ],
+  // Entertainment
   'Horoscopes & Astrology': ['horoscope', 'astrology', 'zodiac', 'star sign', 'planetary', 
     'constellation', 'fortune', 'prediction', 'cosmic', 'astrological', 'natal chart'
-  ],
-  'Comics & Puzzles': ['comics', 'puzzle', 'crossword', 'sudoku', 'games', 'cartoons', 
-    'riddles', 'brain teasers', 'word games', 'comic strip', 'manga'
   ]
 } as const;
 
