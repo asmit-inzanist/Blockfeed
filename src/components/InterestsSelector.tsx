@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { X, Plus, Send } from 'lucide-react';
+import { X, Plus, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface InterestsSelectorProps {
   interests: string[];
@@ -32,26 +34,14 @@ const PREDEFINED_INTERESTS = [
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(interests);
-  const [customInterest, setCustomInterest] = useState('');
+  const [suggestionForm, setSuggestionForm] = useState({
+    name: '',
+    email: '',
+    suggestion: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const { toast } = useToast();
-
-  const handleSendSuggestion = async () => {
-    try {
-      // Here you can implement the actual logic to send the suggestion
-      // For now, we'll just show a success message
-      toast({
-        title: "Thank you for your suggestion!",
-        description: "We've received your topic suggestion and will review it soon.",
-      });
-      setCustomInterest('');
-    } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleAddInterest = (interest: string) => {
     if (!selectedInterests.includes(interest)) {
@@ -61,6 +51,39 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
 
   const handleRemoveInterest = (interest: string) => {
     setSelectedInterests(selectedInterests.filter(i => i !== interest));
+  };
+
+  const handleSendSuggestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-topic-suggestion', {
+        body: {
+          name: suggestionForm.name,
+          email: suggestionForm.email,
+          suggestion: suggestionForm.suggestion,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Thank you for your suggestion!",
+        description: "We've received your topic suggestion and will review it soon.",
+      });
+
+      setSuggestionForm({ name: '', email: '', suggestion: '' });
+      setIsSuggestionOpen(false);
+    } catch (error) {
+      toast({
+        title: "Something went wrong",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSave = () => {
@@ -149,26 +172,66 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
             </div>
           </div>
 
-          {/* Topic Suggestion Form */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Want to suggest a topic?</h4>
-            <div className="space-y-2">
-              <Textarea 
-                placeholder="Tell us what topics you'd like to see in your feed..."
-                className="min-h-[60px] max-h-[60px] resize-none text-sm"
-                value={customInterest}
-                onChange={(e) => setCustomInterest(e.target.value)}
-              />
-              <Button 
-                className="w-full h-8 text-sm" 
-                onClick={handleSendSuggestion}
-                disabled={!customInterest.trim()}
-              >
-                <Send className="w-3 h-3 mr-2" />
-                Send Suggestion
+          {/* Topic Suggestion Button */}
+          <Dialog open={isSuggestionOpen} onOpenChange={setIsSuggestionOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <Plus className="w-3 h-3 mr-2" />
+                Want to suggest a topic?
               </Button>
-            </div>
-          </div>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Suggest a Topic</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSendSuggestion} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={suggestionForm.name}
+                    onChange={(e) => setSuggestionForm(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={suggestionForm.email}
+                    onChange={(e) => setSuggestionForm(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="suggestion">Topic Suggestion</Label>
+                  <Textarea
+                    id="suggestion"
+                    value={suggestionForm.suggestion}
+                    onChange={(e) => setSuggestionForm(prev => ({ ...prev, suggestion: e.target.value }))}
+                    placeholder="What topics would you like to see in your feed?"
+                    required
+                    className="resize-none"
+                    rows={4}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send Suggestion
+                    </>
+                  )}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-4">
