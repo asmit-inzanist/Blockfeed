@@ -33,7 +33,7 @@ const Footer = () => {
         {/* Bottom section */}
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm font-mono">
-            © 2024 BlockFeed. All rights reserved. Built with 💜 for the future.
+            © 2025 BlockFeed. All rights reserved. Built with 💜 for the future.
           </p>
           
           {/* Social links */}
