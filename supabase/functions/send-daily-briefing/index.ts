@@ -25,19 +25,104 @@ interface BriefingRequest {
 }
 
 const RSS_FEEDS = {
+  // Technology
   'TechCrunch': 'https://techcrunch.com/feed/',
+  'The Verge': 'https://www.theverge.com/rss/index.xml',
+  'Wired': 'https://www.wired.com/feed/rss',
+  'Ars Technica': 'https://arstechnica.com/feed/',
+  
+  // Business
+  'Harvard Business Review': 'https://hbr.org/feed',
+  'Fast Company': 'https://www.fastcompany.com/feed',
+  'Inc.com': 'https://www.inc.com/rss/',
+  'Business News Daily': 'https://www.businessnewsdaily.com/feed',
+  
+  // Travel
+  'Lonely Planet': 'https://www.lonelyplanet.com/blog/feed/',
+  'Travel + Leisure': 'https://www.travelandleisure.com/feed',
+  'Condé Nast Traveler': 'https://www.cntraveler.com/feed',
+  'The Points Guy': 'https://thepointsguy.com/feed/',
+  
+  // Food & Dining
+  'Food & Wine': 'https://www.foodandwine.com/feed',
+  'Bon Appétit': 'https://www.bonappetit.com/feed',
+  'Eater': 'https://www.eater.com/rss/index.xml',
+  'Serious Eats': 'https://www.seriouseats.com/feed',
+  
+  // Automotive
+  'Motor Trend': 'https://www.motortrend.com/feed',
+  'Autoblog': 'https://www.autoblog.com/rss.xml',
+  'Car and Driver': 'https://www.caranddriver.com/rss/all.xml/',
+  'Jalopnik': 'https://jalopnik.com/rss',
+  
+  // Real Estate
+  'Realtor.com News': 'https://www.realtor.com/news/feed/',
+  'Inman News': 'https://www.inman.com/feed/',
+  'HousingWire': 'https://www.housingwire.com/feed',
+  'The Real Deal': 'https://therealdeal.com/feed/',
+  
+  // Energy
+  'OilPrice.com': 'https://oilprice.com/rss/main',
+  'Renewable Energy World': 'https://www.renewableenergyworld.com/feed/',
+  'Energy News Network': 'https://energynews.us/feed/',
+  'Utility Dive': 'https://www.utilitydive.com/feeds/news/',
+  
+  // World News
   'BBC News': 'https://feeds.bbci.co.uk/news/rss.xml',
   'CNN': 'https://rss.cnn.com/rss/edition.rss',
   'Reuters': 'https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best',
   'The Guardian': 'https://www.theguardian.com/world/rss',
+  
+  // Finance
   'MarketBeat': 'https://www.marketbeat.com/rss/',
   'Benzinga': 'https://feeds.benzinga.com/benzinga',
+  'Financial Times': 'https://www.ft.com/?format=rss',
+  'Bloomberg': 'https://www.bloomberg.com/feeds/technology.rss',
+  
+  // Sports
   'NDTV Sports': 'https://feeds.feedburner.com/ndtvsports-latest',
+  'ESPN': 'https://www.espn.com/espn/rss/news',
+  'Sports Illustrated': 'https://www.si.com/rss/si_topstories.rss',
+  
+  // Science
   'TheSpaceDaily': 'https://www.spacedaily.com/spacedaily.xml',
+  'Scientific American': 'https://www.scientificamerican.com/rss/blog/60-second-science/',
+  'Science Daily': 'https://www.sciencedaily.com/rss/all.xml',
+  
+  // Health
   'Medlineplus': 'https://www.nlm.nih.gov/medlineplus/feeds/news.xml',
+  'WebMD': 'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC',
+  'Medical News Today': 'https://www.medicalnewstoday.com/newsfeeds/rss/medical_news_today_news.xml',
+  
+  // Entertainment
   'TMZ': 'https://www.tmz.com/rss.xml',
-  'TheScience': 'https://www.thescience.org/feed/',
-  'ThePrint': 'https://theprint.in/feed/'
+  'Variety': 'https://variety.com/feed/',
+  'Hollywood Reporter': 'https://www.hollywoodreporter.com/feed/',
+  
+  // Gaming
+  'Polygon': 'https://www.polygon.com/rss/index.xml',
+  'IGN': 'https://www.ign.com/rss/articles/feed',
+  'PC Gamer': 'https://www.pcgamer.com/rss/',
+  
+  // Cybersecurity
+  'Krebs on Security': 'https://krebsonsecurity.com/feed/',
+  'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
+  'Dark Reading': 'https://www.darkreading.com/rss.xml',
+  
+  // Business Tech
+  'CIO': 'https://www.cio.com/index.rss',
+  'Information Week': 'https://www.informationweek.com/rss_simple.asp',
+  'eWeek': 'https://www.eweek.com/feed/',
+  
+  // Health Tech
+  'Digital Health': 'https://www.digitalhealth.net/feed/',
+  'Health IT News': 'https://www.healthcareitnews.com/feed/',
+  'MobiHealth News': 'https://www.mobihealthnews.com/feed/',
+  
+  // Sports Tech
+  'SportTechie': 'https://www.sporttechie.com/feed/',
+  'Sports Technology Blog': 'https://www.sportstechnologyblog.com/feed/',
+  'Stack Sports': 'https://www.stack.com/feed/'
 };
 
 function cleanText(text: string): string {
@@ -99,6 +184,81 @@ async function parseRSSFeed(xmlText: string, source: string): Promise<Article[]>
 
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase();
+  
+  // Check specialized tech categories first to avoid misclassification as general tech
+  // Business Tech
+  if (sourceLower.includes('cio') || sourceLower.includes('informationweek') || 
+      sourceLower.includes('eweek') || sourceLower.includes('computerworld') ||
+      sourceLower.includes('infoworld') || sourceLower.includes('enterprise') ||
+      (sourceLower.includes('business') && sourceLower.includes('tech')))
+    return 'Business Tech';
+
+  // Health Tech
+  if (sourceLower.includes('digitalhealth') || sourceLower.includes('healthit') || 
+      sourceLower.includes('mobihealth') || sourceLower.includes('medical futurist') ||
+      (sourceLower.includes('health') && sourceLower.includes('tech')))
+    return 'Health Tech';
+
+  // Sports Tech
+  if (sourceLower.includes('sporttechie') || sourceLower.includes('sports technology') || 
+      sourceLower.includes('stack sports') || 
+      (sourceLower.includes('sports') && sourceLower.includes('tech')))
+    return 'Sports Tech';
+
+  // Cybersecurity
+  if (sourceLower.includes('security') || sourceLower.includes('krebs') || 
+      sourceLower.includes('hack') || sourceLower.includes('threat') ||
+      sourceLower.includes('cyber') || sourceLower.includes('infosec'))
+    return 'Cybersecurity';
+
+  // Gaming
+  if (sourceLower.includes('gaming') || sourceLower.includes('game') || 
+      sourceLower.includes('polygon') || sourceLower.includes('ign') ||
+      sourceLower.includes('eurogamer') || sourceLower.includes('pc gamer'))
+    return 'Gaming';
+
+  // Business
+  if (sourceLower.includes('business') || sourceLower.includes('inc.com') || 
+      sourceLower.includes('fastcompany') || sourceLower.includes('hbr.org') ||
+      sourceLower.includes('entrepreneur') || sourceLower.includes('forbes') ||
+      sourceLower.includes('bloomberg'))
+    return 'Business';
+
+  // Travel
+  if (sourceLower.includes('travel') || sourceLower.includes('tourism') ||
+      sourceLower.includes('lonelyplanet') || sourceLower.includes('cntraveler') ||
+      sourceLower.includes('tripadvisor') || sourceLower.includes('voyage'))
+    return 'Travel';
+
+  // Food & Dining
+  if (sourceLower.includes('food') || sourceLower.includes('recipe') ||
+      sourceLower.includes('dining') || sourceLower.includes('eater') ||
+      sourceLower.includes('culinary') || sourceLower.includes('gastro') ||
+      sourceLower.includes('bonappetit') || sourceLower.includes('kitchen'))
+    return 'Food & Dining';
+
+  // Automotive
+  if (sourceLower.includes('auto') || sourceLower.includes('car') ||
+      sourceLower.includes('motor') || sourceLower.includes('jalopnik') ||
+      sourceLower.includes('vehicle') || sourceLower.includes('automotive') ||
+      sourceLower.includes('drive'))
+    return 'Automotive';
+
+  // Real Estate
+  if (sourceLower.includes('realtor') || sourceLower.includes('housing') ||
+      sourceLower.includes('realestate') || sourceLower.includes('therealdeal') ||
+      sourceLower.includes('property') || sourceLower.includes('estate') ||
+      sourceLower.includes('zillow'))
+    return 'Real Estate';
+
+  // Energy
+  if (sourceLower.includes('energy') || sourceLower.includes('oilprice') ||
+      sourceLower.includes('utility') || sourceLower.includes('renewable') ||
+      sourceLower.includes('power') || sourceLower.includes('electricity') ||
+      sourceLower.includes('solar') || sourceLower.includes('wind power'))
+    return 'Energy';
+
+  // Check general categories
   if (sourceLower.includes('entertainment') || sourceLower.includes('tmz')) return 'Entertainment';
   if (sourceLower.includes('ndtv sports') || (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))) return 'Sports';
   if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology';
@@ -126,17 +286,28 @@ function filterNewsByInterests(articles: Article[], interests: string[]): Articl
 
 function getKeywordsForCategory(category: string): string[] {
   const keywordMap: { [key: string]: string[] } = {
-    'Technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'tech', 'startup', 'innovation'],
-    'Finance': ['finance', 'stock', 'market', 'economy', 'investment', 'banking', 'crypto', 'bitcoin', 'trading', 'money'],
-    'Sports': ['sports', 'football', 'basketball', 'soccer', 'tennis', 'baseball', 'cricket', 'olympics', 'championship'],
-    'Politics': ['politics', 'government', 'election', 'policy', 'congress', 'parliament', 'vote', 'political'],
-    'Health': ['health', 'medical', 'medicine', 'disease', 'treatment', 'healthcare', 'doctor', 'patient', 'wellness'],
-    'Entertainment': ['entertainment', 'movie', 'film', 'celebrity', 'music', 'hollywood', 'tv', 'show', 'actor'],
-    'Science': ['science', 'research', 'study', 'discovery', 'experiment', 'scientist', 'space', 'climate'],
-    'World News': ['world', 'international', 'global', 'country', 'nation', 'war', 'conflict', 'diplomacy']
+    'Technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'tech', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
+    'Finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
+    'Sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
+    'Politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
+    'Health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
+    'Entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
+    'Science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
+    'World News': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis'],
+    'Business': ['business', 'entrepreneur', 'startup', 'company', 'corporate', 'industry', 'management', 'leadership', 'enterprise', 'commerce', 'strategy', 'innovation', 'workplace', 'executive'],
+    'Travel': ['travel', 'tourism', 'destination', 'vacation', 'hotel', 'resort', 'flight', 'adventure', 'tourist', 'holiday', 'journey', 'explore', 'trip', 'cruise', 'hospitality'],
+    'Food & Dining': ['food', 'restaurant', 'dining', 'cuisine', 'recipe', 'chef', 'cooking', 'culinary', 'meal', 'gastronomy', 'menu', 'dishes', 'flavors', 'kitchen', 'eat'],
+    'Automotive': ['car', 'vehicle', 'automotive', 'motor', 'drive', 'racing', 'electric vehicle', 'ev', 'automobile', 'transportation', 'engine', 'auto industry', 'manufacturer'],
+    'Real Estate': ['real estate', 'property', 'housing', 'mortgage', 'realty', 'apartment', 'home', 'commercial', 'residential', 'construction', 'development', 'lease', 'rent'],
+    'Energy': ['energy', 'power', 'electricity', 'renewable', 'solar', 'wind', 'oil', 'gas', 'nuclear', 'utility', 'grid', 'sustainability', 'carbon', 'climate'],
+    'Gaming': ['gaming', 'game', 'playstation', 'xbox', 'nintendo', 'esports', 'gamer', 'console', 'pc gaming', 'video games', 'steam', 'multiplayer', 'rpg', 'gameplay', 'gaming industry'],
+    'Cybersecurity': ['cybersecurity', 'security', 'hack', 'breach', 'malware', 'ransomware', 'cyber attack', 'infosec', 'data security', 'encryption', 'vulnerability', 'threat', 'privacy', 'cyber defense'],
+    'Business Tech': ['enterprise tech', 'it infrastructure', 'cloud computing', 'digital transformation', 'enterprise software', 'it management', 'data center', 'networking', 'virtualization', 'saas'],
+    'Health Tech': ['healthtech', 'digital health', 'telemedicine', 'health informatics', 'medical technology', 'biotech', 'health data', 'wearables', 'medical devices', 'health apps'],
+    'Sports Tech': ['sports technology', 'sports analytics', 'sports science', 'performance tech', 'sports equipment', 'sports data', 'fitness tech', 'athlete tracking', 'sports innovation']
   };
   
-  return keywordMap[category] || [];
+  return keywordMap[category.toLowerCase()] || [];
 }
 
 async function summarizeAndRankArticles(articles: Article[], interests: string[]): Promise<Article[]> {
