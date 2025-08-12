@@ -215,6 +215,33 @@ function getCategoryFromSource(source: string): string {
   if (sourceLower.includes('energy') || sourceLower.includes('oilprice') || 
       sourceLower.includes('utility') || sourceLower.includes('renewable')) 
     return 'Energy'
+
+  // Gaming
+  if (sourceLower.includes('gaming') || sourceLower.includes('game') || 
+      sourceLower.includes('polygon') || sourceLower.includes('ign') ||
+      sourceLower.includes('eurogamer') || sourceLower.includes('pc gamer')) 
+    return 'Gaming'
+    
+  // Cybersecurity
+  if (sourceLower.includes('security') || sourceLower.includes('krebs') || 
+      sourceLower.includes('hack') || sourceLower.includes('threat')) 
+    return 'Cybersecurity'
+
+  // Business Tech
+  if (sourceLower.includes('cio') || sourceLower.includes('informationweek') || 
+      sourceLower.includes('eweek') || sourceLower.includes('computerworld') ||
+      sourceLower.includes('infoworld')) 
+    return 'Business Tech'
+
+  // Health Tech
+  if (sourceLower.includes('digitalhealth') || sourceLower.includes('healthit') || 
+      sourceLower.includes('mobihealth') || sourceLower.includes('medical futurist')) 
+    return 'Health Tech'
+
+  // Sports Tech
+  if (sourceLower.includes('sporttechie') || sourceLower.includes('sports technology') || 
+      sourceLower.includes('stack sports')) 
+    return 'Sports Tech'
   
   // Check entertainment first to avoid sports misclassification
   if (
@@ -272,7 +299,11 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
   
   // Get all relevant keywords for the selected interests
   const keywordSets = userInterests.map(interest => {
-    const keywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || [];
+    // Match case-insensitively with the INTEREST_KEYWORDS keys
+    const matchingKey = Object.keys(INTEREST_KEYWORDS).find(
+      k => k.toLowerCase() === interest.toLowerCase()
+    );
+    const keywords = matchingKey ? INTEREST_KEYWORDS[matchingKey] : [];
     return new Set(keywords.map(k => k.toLowerCase()));
   });
 
@@ -447,9 +478,12 @@ serve(async (req) => {
     });
 
     // Get keywords used for filtering
-    const filteringKeywords = userInterests.flatMap(interest => 
-      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
-    );
+    const filteringKeywords = userInterests.flatMap(interest => {
+      const matchingKey = Object.keys(INTEREST_KEYWORDS).find(
+        k => k.toLowerCase() === interest.toLowerCase()
+      );
+      return matchingKey ? INTEREST_KEYWORDS[matchingKey] : [];
+    });
 
     return new Response(
       JSON.stringify({ 
