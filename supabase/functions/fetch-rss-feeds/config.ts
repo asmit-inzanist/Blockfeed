@@ -20,7 +20,12 @@ export const PREDEFINED_INTERESTS = [
   'Food & Dining',
   'Automotive',
   'Real Estate',
-  'Energy'
+  'Energy',
+  'Gaming',
+  'Cybersecurity',
+  'Business Tech',
+  'Health Tech',
+  'Sports Tech'
 ] as const;
 
 export const INTEREST_KEYWORDS: Record<string, string[]> = {
@@ -37,5 +42,10 @@ export const INTEREST_KEYWORDS: Record<string, string[]> = {
   'Food & Dining': ['food', 'restaurant', 'dining', 'cuisine', 'recipe', 'chef', 'cooking', 'culinary', 'meal', 'gastronomy', 'menu', 'dishes', 'flavors', 'kitchen', 'eat'],
   'Automotive': ['car', 'vehicle', 'automotive', 'motor', 'drive', 'racing', 'electric vehicle', 'ev', 'automobile', 'transportation', 'engine', 'auto industry', 'manufacturer'],
   'Real Estate': ['real estate', 'property', 'housing', 'mortgage', 'realty', 'apartment', 'home', 'commercial', 'residential', 'construction', 'development', 'lease', 'rent'],
-  'Energy': ['energy', 'power', 'electricity', 'renewable', 'solar', 'wind', 'oil', 'gas', 'nuclear', 'utility', 'grid', 'sustainability', 'carbon', 'climate']
+  'Energy': ['energy', 'power', 'electricity', 'renewable', 'solar', 'wind', 'oil', 'gas', 'nuclear', 'utility', 'grid', 'sustainability', 'carbon', 'climate'],
+  'Gaming': ['gaming', 'game', 'playstation', 'xbox', 'nintendo', 'esports', 'gamer', 'console', 'pc gaming', 'video games', 'steam', 'multiplayer', 'rpg', 'gameplay', 'gaming industry'],
+  'Cybersecurity': ['cybersecurity', 'security', 'hack', 'breach', 'malware', 'ransomware', 'cyber attack', 'infosec', 'data security', 'encryption', 'vulnerability', 'threat', 'privacy', 'cyber defense'],
+  'Business Tech': ['enterprise tech', 'it infrastructure', 'cloud computing', 'digital transformation', 'enterprise software', 'it management', 'data center', 'networking', 'virtualization', 'saas'],
+  'Health Tech': ['healthtech', 'digital health', 'telemedicine', 'health informatics', 'medical technology', 'biotech', 'health data', 'wearables', 'medical devices', 'health apps'],
+  'Sports Tech': ['sports technology', 'sports analytics', 'sports science', 'performance tech', 'sports equipment', 'sports data', 'fitness tech', 'athlete tracking', 'sports innovation']
 };

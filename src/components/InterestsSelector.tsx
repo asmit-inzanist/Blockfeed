@@ -13,7 +13,8 @@ interface InterestsSelectorProps {
 const PREDEFINED_INTERESTS = [
   'Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 
   'Science', 'World News', 'Business', 'Travel', 'Food & Dining', 'Automotive',
-  'Real Estate', 'Energy'
+  'Real Estate', 'Energy', 'Gaming', 'Cybersecurity', 'Business Tech', 
+  'Health Tech', 'Sports Tech'
 ];
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
