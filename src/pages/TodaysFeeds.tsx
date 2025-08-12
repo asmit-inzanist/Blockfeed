@@ -168,9 +168,6 @@ const TodaysFeeds = () => {
       const fetchedArticles = data.articles || [];
       const customTerms = data.customTerms || [];
       
-      console.log('Fetched articles:', fetchedArticles.length);
-      console.log('Custom terms:', customTerms);
-      
       setAllNews(fetchedArticles);
       setArticles(fetchedArticles);
       

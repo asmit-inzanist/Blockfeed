@@ -1,4 +1,4 @@
-import { Article } from './types.ts';
+import { Article } from './types';
 
 interface KeywordSource {
   predefined: string[];
@@ -70,17 +70,7 @@ async function getGeminiSuggestions(interest: string, apiKey: string): Promise<s
   const prompt = {
     contents: [{
       parts: [{
-        text: `You are a news filtering expert. Given the custom interest "${interest}", generate relevant keywords for finding news articles. Consider:
-
-1. Direct terms and their variations
-2. Related technologies or tools
-3. Key companies or organizations
-4. Industry-specific terms
-5. Common abbreviations or acronyms
-
-Format your response as a simple list, one term per line. Return only the most relevant 10-15 terms that would appear in news headlines or article content.
-
-Be specific and focus on terms that would actually appear in news articles. Include both technical and non-technical terms.`
+        text: `Given the interest "${interest}", provide 5-8 closely related keywords for news filtering. Format: one word or short phrase per line, no numbers or bullets. Keep it concise and relevant.`
       }]
     }],
     generationConfig: {
@@ -143,7 +133,7 @@ async function findSimilarTopics(interest: string): Promise<string[]> {
   return matchingTopics;
 }
 
-export async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
+async function getExpandedKeywords(interest: string): Promise<{ keywords: string[], source: KeywordSource }> {
   const predefinedKeywords = new Set<string>();
   const aiKeywords = new Set<string>();
   const commonVariations = new Set<string>();
@@ -197,6 +187,20 @@ export async function getExpandedKeywords(interest: string): Promise<{ keywords:
       ai: Array.from(aiKeywords)
     }
   };
+  
+  // Add common variations
+  const words = interest.toLowerCase().split(/\s+/);
+  words.forEach(word => {
+    keywords.add(word);
+    // Add common prefixes/suffixes
+    keywords.add(word + 's');  // plural
+    keywords.add(word + 'ing');  // gerund
+    if (word.endsWith('y')) {
+      keywords.add(word.slice(0, -1) + 'ies');  // y -> ies plural
+    }
+  });
+
+  return Array.from(keywords);
 }
 
 function calculateArticleScore(
@@ -279,7 +283,7 @@ export async function filterArticlesForCustomInterest(
   });
 
   // Filter articles with scores above threshold and sort by score
-  const MIN_SCORE = 5; // Very low threshold for custom interests to ensure we catch relevant articles
+  const MIN_SCORE = 10; // Lowered threshold for better matching
   const filteredArticles = scoredArticles
     .filter(article => article.relevanceScore >= MIN_SCORE)
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
@@ -296,13 +300,6 @@ export async function filterArticlesForCustomInterest(
     console.log('AI generated keywords:', keywordData.source.ai);
   }
 
-  // Log the expanded keywords for debugging
-  console.log('Expanded keywords for interest:', interest, {
-    predefined: keywordData.source.predefined,
-    ai: keywordData.source.ai,
-    totalKeywords: keywordData.keywords.length
-  });
-
   // Add debug information to each article
   const articlesWithDebug = filteredArticles.map(article => ({
     ...article,
@@ -312,7 +309,7 @@ export async function filterArticlesForCustomInterest(
       interest,
       totalKeywords: keywordData.keywords.length,
       keywordsUsed: keywordData.keywords.filter(k => 
-        (article.title + ' ' + (article.description || '')).toLowerCase().includes(k.toLowerCase())
+        (article.title + article.description).toLowerCase().includes(k.toLowerCase())
       )
     }
   }));

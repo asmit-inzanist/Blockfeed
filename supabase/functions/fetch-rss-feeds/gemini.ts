@@ -1,20 +1,5 @@
-import { Article } from './types.ts';
-import { getGeminiKey } from './config.ts';
-
-function sanitizeText(text: string): string {
-  // Replace HTML entities with their actual characters
-  return text
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8216;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
-    .replace(/&#8230;/g, '...')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-}
+import { Article } from './types';
+import { getGeminiKey } from './config';
 
 interface RelatedWords {
   terms: string[];
@@ -30,61 +15,46 @@ interface GeminiConfig {
   topP?: number;
 }
 
-async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export async function callGemini(
   apiKey: string,
   prompt: string,
   config: GeminiConfig = {}
-): Promise<string> {
+) {
   const models = ['gemini-1.5-flash', 'gemini-pro'];
-  const MAX_RETRIES = 3;
   let lastError;
 
   for (const model of models) {
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        console.log(`Trying ${model} (attempt ${attempt + 1}/${MAX_RETRIES})...`);
-        
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: prompt
-                }]
-              }],
-              generationConfig: {
-                temperature: config.temperature ?? 0.1,
-                maxOutputTokens: config.maxOutputTokens ?? 2048,
-                topK: config.topK ?? 1,
-                topP: config.topP ?? 0.1
-              }
-            })
-          }
-        );
+    try {
+      console.log(`Trying ${model}...`);
+      
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }],
+            generationConfig: {
+              temperature: config.temperature ?? 0.1,
+              maxOutputTokens: config.maxOutputTokens ?? 2048,
+              topK: config.topK ?? 1,
+              topP: config.topP ?? 0.1
+            }
+          })
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`${model} error:`, response.status, errorText);
-        
-        // Check if the error is due to overload
-        if (response.status === 503) {
-          const backoffTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
-          console.log(`Model overloaded, waiting ${backoffTime}ms before retry...`);
-          await sleep(backoffTime);
-          continue;
-        }
-        
         lastError = new Error(`${model} returned ${response.status}: ${errorText}`);
-        break; // Try next model for non-overload errors
+        continue;
       }
 
       const data = await response.json();
@@ -92,73 +62,17 @@ export async function callGemini(
       
       if (!text) {
         lastError = new Error(`${model} returned no text in response`);
-        if (attempt < MAX_RETRIES - 1) {
-          await sleep(1000); // Wait 1s before retry
-          continue;
-        }
-        break;
+        continue;
       }
 
       return text;
     } catch (error) {
       console.error(`${model} error:`, error);
       lastError = error;
-      if (attempt < MAX_RETRIES - 1) {
-        await sleep(1000); // Wait 1s before retry
-        continue;
-      }
     }
   }
-}
 
-throw lastError || new Error('All Gemini models failed');
-}
-
-export async function mapInterestToCategories(
-  customInterest: string,
-  apiKey: string
-): Promise<string[]> {
-  const prompt = `Given the user's custom interest "${customInterest}", determine which of these main categories it belongs to. Only return category names that are HIGHLY relevant, separated by commas. If none are relevant, return "NONE".
-
-Available categories:
-- Technology (tech, software, digital, etc.)
-- Finance (business, economy, markets, etc.)
-- Sports (athletics, games, competition, etc.)
-- Politics (government, policy, etc.)
-- Health (medical, healthcare, wellness, etc.)
-- Entertainment (media, movies, shows, etc.)
-- Science (research, discovery, etc.)
-- World News (international, global affairs, etc.)
-- AI & ML (artificial intelligence, machine learning, etc.)
-- Startups (entrepreneurship, new businesses, etc.)
-- Gaming (video games, esports, etc.)
-- Cybersecurity (security, hacking, privacy, etc.)
-- Business Tech (enterprise software, business solutions, etc.)
-
-Example responses:
-- For "machine learning": AI & ML, Technology
-- For "hospital": Health
-- For "blockchain": Technology, Finance
-- For "random123": NONE`;
-
-  try {
-    const response = await callGemini(apiKey, prompt, {
-      temperature: 0.1, // Low temperature for consistent results
-      maxOutputTokens: 100
-    });
-
-    // Parse the response
-    const categories = response
-      .split(',')
-      .map(cat => cat.trim())
-      .filter(cat => cat !== 'NONE' && cat.length > 0);
-
-    console.log(`Gemini mapped "${customInterest}" to categories:`, categories);
-    return categories;
-  } catch (error) {
-    console.error('Error mapping interest to categories:', error);
-    return [];
-  }
+  throw lastError || new Error('All Gemini models failed');
 }
 
 export async function findRelatedWords(
@@ -168,38 +82,31 @@ export async function findRelatedWords(
   if (!apiKey) {
     throw new Error('Gemini API key is required');
   }
-  console.log('findRelatedWords called for interest:', interest);
 
-  const prompt = `Generate comprehensive search terms for finding news articles about: "${interest}"
+  const prompt = `You are a news classification expert. For the given custom interest or topic, generate relevant search terms and categories that would help find related news articles from RSS feeds.
 
-You must return a JSON object with these fields:
+INTEREST: ${interest}
+
+TASK:
+1. Analyze the interest and understand its domain
+2. Generate specific terms that might appear in news articles about this topic
+3. Map it to broader news categories
+4. Include related technical terms if applicable
+
+RESPONSE REQUIRED:
+Return a JSON object with these fields (max 15 items per category, ordered by relevance):
 {
-  "terms": [
-    // 10-15 specific words or phrases that would appear in news article titles/content
-    // Include common variations and related terms
-    // Example: for "cybersecurity" include "cyber attack", "data breach", "hacking", etc.
-  ],
-  "categories": [
-    // 3-5 broad news categories this topic falls under
-    // Example: for "cybersecurity" include "Technology", "Security", "Crime"
-  ],
-  "technologies": [
-    // 5-8 specific technical terms related to the topic
-    // Example: for "cybersecurity" include "malware", "firewall", "encryption", etc.
-  ],
-  "concepts": [
-    // 3-5 broader themes or concepts
-    // Example: for "cybersecurity" include "digital security", "online privacy", etc.
-  ]
+  "terms": ["specific words likely to appear in relevant news articles"],
+  "categories": ["matching news categories"],
+  "technologies": ["related technical terms"],
+  "concepts": ["broader topics and themes"]
 }
 
-Important:
-- Include exact phrases journalists would use in headlines
-- Include both technical and non-technical terms
-- Include current trending terms in this field
-- Make terms specific enough to be meaningful but not too narrow
+Make terms specific enough to filter news but broad enough to catch relevant articles.
+Ensure terms are commonly used in news articles.
+Include variations and synonyms.
 
-Return ONLY the JSON object, no other text.`;
+DO NOT include any other text, only the JSON object.`;
 
   try {
     console.log('Requesting related words from Gemini for:', interest);
@@ -228,151 +135,127 @@ Return ONLY the JSON object, no other text.`;
   }
 }
 
-function getBasicScore(article: Article, interests: string[]): number {
-  const content = (article.title + " " + (article.description || "")).toLowerCase();
-  const category = (article.category || "").toLowerCase();
-  
-  let score = 0;
-  const interestsLower = interests.map(i => i.toLowerCase());
-
-  // Direct interest matches in title (highest weight)
-  if (interestsLower.some(interest => article.title.toLowerCase().includes(interest))) {
-    score += 50;
-  }
-
-  // Category matches
-  if (interestsLower.some(interest => category.includes(interest))) {
-    score += 20;
-  }
-
-  // Content matches
-  const matchCount = interestsLower.filter(interest => content.includes(interest)).length;
-  score += matchCount * 10;
-
-  // Normalize to 0-100
-  return Math.min(100, Math.max(0, score));
-}
-
 export async function scoreArticles(
   articles: Article[],
   interests: string[],
   apiKey: string
 ): Promise<Article[]> {
   if (!apiKey) {
-    console.warn('No Gemini API key provided, falling back to basic scoring');
-    return articles.map(article => ({
-      ...article,
-      ai_score: getBasicScore(article, interests)
-    }));
+    throw new Error('Gemini API key is required');
   }
 
   if (articles.length === 0) {
     return articles;
   }
 
-  // Process articles in smaller chunks to avoid token limits
-  const CHUNK_SIZE = 10;
-  const chunks: Article[][] = [];
-  for (let i = 0; i < articles.length; i += CHUNK_SIZE) {
-    chunks.push(articles.slice(i, i + CHUNK_SIZE));
-  }
+  // First, get related words for each interest
+  const relatedWordsPromises = interests.map(interest => 
+    findRelatedWords(interest, apiKey)
+      .catch(error => {
+        console.error(`Error getting related words for ${interest}:`, error);
+        return null;
+      })
+  );
 
-  // Score each chunk separately
-  const allScores: Array<{ title: string; score: number }> = [];
+  const relatedWordsList = await Promise.all(relatedWordsPromises);
   
-  for (const chunk of chunks) {
-    try {
-      function sanitizeText(text: string): string {
-    // Replace HTML entities with their actual characters
-    return text
-      .replace(/&#8217;/g, "'")
-      .replace(/&#8216;/g, "'")
-      .replace(/&#8220;/g, '"')
-      .replace(/&#8221;/g, '"')
-      .replace(/&#8230;/g, '...')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
-  }
+  // Combine all related terms
+  const allTerms = new Set<string>();
+  const allCategories = new Set<string>();
+  const allTechnologies = new Set<string>();
+  const allConcepts = new Set<string>();
 
-  const prompt = `You are an article scorer. Generate a JSON array of scores for articles based on relevance to: ${interests.join(', ')}.
-
-Score 80-100 for direct matches, 40-79 for indirect matches, 1-39 for unrelated.
-
-Articles:
-${chunk.map((article, index) => 
-`${index + 1}. "${sanitizeText(article.title)}" (${article.category})`).join('\n')}
-
-Return only a JSON array like this, no other text:
-[
-  {"title": "Exact Article Title", "score": number}
-]`;
-
-      const response = await callGemini(apiKey, prompt, {
-        temperature: 0.1,
-        maxOutputTokens: 1024
-      });
-
-      // Extract JSON from response with safety checks
-      const jsonMatch = response.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        console.error('No JSON array found in response');
-        throw new Error('Invalid response format');
-      }
-
-      let cleanResponse = jsonMatch[0]
-        .replace(/```json\s*|\s*```/g, '')
-        .replace(/[\u200B-\u200D\uFEFF]/g, '')
-        .replace(/\n/g, ' ')
-        .trim();
-
-      // Ensure the JSON is properly terminated
-      if (!cleanResponse.endsWith(']')) {
-        cleanResponse = cleanResponse.substring(0, cleanResponse.lastIndexOf(']') + 1);
-      }
-
-      try {
-        const chunkScores = JSON.parse(cleanResponse);
-        if (Array.isArray(chunkScores)) {
-          // Validate each score object
-          const validScores = chunkScores.filter(score => 
-            typeof score === 'object' && 
-            score !== null && 
-            typeof score.title === 'string' && 
-            typeof score.score === 'number'
-          );
-          allScores.push(...validScores);
-        }
-      } catch (parseError) {
-        console.error('Error parsing chunk scores:', parseError);
-        // If parsing fails, assign default scores to this chunk
-        chunk.forEach(article => {
-          allScores.push({ title: article.title, score: 75 });
-        });
-      }
-    } catch (error) {
-      console.error('Error scoring chunk:', error);
-      // If Gemini fails, use basic scoring as fallback
-      chunk.forEach(article => {
-        allScores.push({
-          title: article.title,
-          score: getBasicScore(article, interests)
-        });
-      });
+  relatedWordsList.forEach(words => {
+    if (words) {
+      words.terms.forEach(term => allTerms.add(term.toLowerCase()));
+      words.categories.forEach(cat => allCategories.add(cat.toLowerCase()));
+      words.technologies?.forEach(tech => allTechnologies.add(tech.toLowerCase()));
+      words.concepts?.forEach(concept => allConcepts.add(concept.toLowerCase()));
     }
-  }
-
-  // Apply scores to articles
-  const scoredArticles = articles.map(article => {
-    const score = allScores.find(s => sanitizeText(s.title) === sanitizeText(article.title));
-    return {
-      ...article,
-      ai_score: score ? Math.min(Math.max(score.score, 1), 100) : 75
-    };
   });
 
-  // Sort by score and return
-  return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75));
+  const prompt = `You are an AI article scorer. Score these articles based on user interests and related terms.
+
+USER INTERESTS: ${interests.join(', ')}
+
+RELATED TERMS:
+- Search Terms: ${Array.from(allTerms).join(', ')}
+- Categories: ${Array.from(allCategories).join(', ')}
+- Technologies: ${Array.from(allTechnologies).join(', ')}
+- Concepts: ${Array.from(allConcepts).join(', ')}
+
+SCORING RULES:
+- Score 80-100: Article directly matches user interests
+- Score 40-79: Article indirectly relates to interests
+- Score 1-39: Article doesn't match interests
+- Consider: title match, category relevance, content relevance
+
+ARTICLES:
+${articles.map((article, index) => 
+`[Article ${index + 1}]
+Title: "${article.title}"
+Category: ${article.category}
+Description: ${article.description}
+Source: ${article.source}
+`).join('\n\n')}
+
+RESPONSE REQUIRED:
+Return a JSON array containing scores for each article. Each object must have exact article title and score:
+[
+  {"title": "Exact Title Here", "score": 85}
+]
+
+DO NOT include any other text, only the JSON array.`;
+
+  try {
+    console.log('Sending article scoring request to Gemini...');
+    const response = await callGemini(apiKey, prompt, {
+      temperature: 0.1,
+      maxOutputTokens: 2048
+    });
+
+    console.log('Raw Gemini response:', response);
+
+    // Clean the response text
+    const cleanResponse = response
+      .replace(/```json\s*|\s*```/g, '')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .trim();
+
+    console.log('Cleaned response:', cleanResponse);
+
+    const scores = JSON.parse(cleanResponse);
+    
+    if (!Array.isArray(scores)) {
+      throw new Error('Gemini did not return an array of scores');
+    }
+
+    console.log('Parsed scores:', scores.slice(0, 3));
+
+    // Apply scores to articles
+    const scoredArticles = articles.map(article => {
+      const score = scores.find(s => s.title === article.title);
+      if (!score) {
+        console.log(`No score found for article: ${article.title}`);
+      }
+      return {
+        ...article,
+        ai_score: score ? Math.min(Math.max(score.score, 1), 100) : 75
+      };
+    });
+
+    // Log score distribution
+    const distribution = scoredArticles.reduce((acc: Record<string, number>, article) => {
+      const range = Math.floor(article.ai_score / 10) * 10;
+      acc[`${range}-${range+9}`] = (acc[`${range}-${range+9}`] || 0) + 1;
+      return acc;
+    }, {});
+
+    console.log('Score distribution:', distribution);
+
+    return scoredArticles.sort((a, b) => (b.ai_score || 75) - (a.ai_score || 75));
+  } catch (error) {
+    console.error('Error scoring articles:', error);
+    throw error;
+  }
 }

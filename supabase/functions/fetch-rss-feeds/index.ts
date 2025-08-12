@@ -1,10 +1,33 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config.ts'
-import { Article } from './types.ts'
-import { filterArticlesForCustomInterest } from './directFilter.ts'
-import { removeDuplicateArticles, mapCustomInterestToMainCategory } from './utils.ts'
-import { scoreArticles, mapInterestToCategories } from './gemini.ts'
+import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config'
+import { Article } from './types'
+import { filterArticlesForCustomInterest, getExp    // Get custom interests and their keywords
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    let filteringKeywords = [];
+
+    if (customInterests.length > 0) {
+      try {
+        // Get keywords for each custom interest
+        const keywordPromises = customInterests.map(interest => getExpandedKeywords(interest));
+        const keywordResults = await Promise.all(keywordPromises);
+        
+        // Combine keywords from all interests
+        filteringKeywords = keywordResults.flatMap(result => result.keywords);
+        
+        // Log for debugging
+        console.log('Filtering keywords:', {
+          interests: customInterests,
+          keywords: filteringKeywords
+        });
+      } catch (error) {
+        console.error('Error getting keywords:', error);
+      }
+    }
+
+    // Use direct filtering approachfrom './directFilter'
+import { removeDuplicateArticles } from './utils'
+import { scoreArticles } from './gemini'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +41,42 @@ const MAX_RETURNED = Number(Deno.env.get('MAX_RETURNED') ?? '30')
 const RSS_FEEDS = {
   // Technology & General Tech
   'TechCrunch': 'https://techcrunch.com/feed/',
+  
+  // Business
+  'Harvard Business Review': 'https://hbr.org/feed',
+  'Fast Company': 'https://www.fastcompany.com/feed',
+  'Inc.com': 'https://www.inc.com/rss/',
+  'Business News Daily': 'https://www.businessnewsdaily.com/feed',
+  
+  // Travel
+  'Lonely Planet': 'https://www.lonelyplanet.com/blog/feed/',
+  'Travel + Leisure': 'https://www.travelandleisure.com/feed',
+  'Condé Nast Traveler': 'https://www.cntraveler.com/feed',
+  'The Points Guy': 'https://thepointsguy.com/feed/',
+  
+  // Food & Dining
+  'Food & Wine': 'https://www.foodandwine.com/feed',
+  'Bon Appétit': 'https://www.bonappetit.com/feed',
+  'Eater': 'https://www.eater.com/rss/index.xml',
+  'Serious Eats': 'https://www.seriouseats.com/feed',
+  
+  // Automotive
+  'Motor Trend': 'https://www.motortrend.com/feed',
+  'Autoblog': 'https://www.autoblog.com/rss.xml',
+  'Car and Driver': 'https://www.caranddriver.com/rss/all.xml/',
+  'Jalopnik': 'https://jalopnik.com/rss',
+  
+  // Real Estate
+  'Realtor.com News': 'https://www.realtor.com/news/feed/',
+  'Inman News': 'https://www.inman.com/feed/',
+  'HousingWire': 'https://www.housingwire.com/feed',
+  'The Real Deal': 'https://therealdeal.com/feed/',
+  
+  // Energy
+  'OilPrice.com': 'https://oilprice.com/rss/main',
+  'Renewable Energy World': 'https://www.renewableenergyworld.com/feed/',
+  'Energy News Network': 'https://energynews.us/feed/',
+  'Utility Dive': 'https://www.utilitydive.com/feeds/news/',
   'The Verge': 'https://www.theverge.com/rss/index.xml',
   'Wired': 'https://www.wired.com/feed/rss',
   'Ars Technica': 'https://arstechnica.com/feed/',
@@ -85,48 +144,7 @@ const RSS_FEEDS = {
   // Sports Tech
   'SportTechie': 'https://www.sporttechie.com/feed/',
   'Sports Technology Blog': 'https://www.sportstechnologyblog.com/feed/',
-  'Stack Sports': 'https://www.stack.com/feed/',
-
-  // Business & Economy
-  'Reuters Business': 'https://www.reutersagency.com/feed/?best-topics=business',
-  'WSJ Business': 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
-  'The Economist': 'https://www.economist.com/business/rss.xml',
-
-  // Automobiles & Mobility
-  'Automotive News': 'https://www.autonews.com/feeds/automotive-news-feeds.xml',
-  'Motor Trend': 'https://www.motortrend.com/feed/',
-  'Electrek': 'https://electrek.co/feed/',
-
-  // Travel & Tourism
-  'Skift': 'https://skift.com/feed/',
-  'Travel Weekly': 'https://www.travelweekly.com/RSS-Feeds/',
-  'Lonely Planet': 'https://www.lonelyplanet.com/blog/feed/',
-
-  // Lifestyle
-  'Lifehacker': 'https://lifehacker.com/rss',
-  'Well+Good': 'https://www.wellandgood.com/feed/',
-  'MindBodyGreen': 'https://www.mindbodygreen.com/rss',
-
-  // Environment
-  'EcoWatch': 'https://www.ecowatch.com/feeds/news.rss',
-  'GreenBiz': 'https://www.greenbiz.com/rss.xml',
-  'CleanTechnica': 'https://cleantechnica.com/feed/',
-
-  // Education
-  'EdSurge': 'https://www.edsurge.com/feeds/rss',
-  'Chronicle': 'https://www.chronicle.com/feed',
-  'Inside Higher Ed': 'https://www.insidehighered.com/feed',
-
-  // Law & Crime
-  'Law.com': 'https://www.law.com/feed/',
-  'Above the Law': 'https://abovethelaw.com/feed/',
-  'JD Supra': 'https://www.jdsupra.com/rss/',
-
-  // Tech Gadgets & Reviews
-  'CNET': 'https://www.cnet.com/rss/all/',
-  'Engadget': 'https://www.engadget.com/rss.xml',
-  'Gizmodo': 'https://gizmodo.com/rss',
-  'TechRadar': 'https://www.techradar.com/rss'
+  'Stack Sports': 'https://www.stack.com/feed/'
 }
 
 function parseRSSFeed(xmlText: string, source: string): Article[] {
@@ -167,125 +185,79 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
   
-  // Business & Economy
-  if (sourceLower.includes('business') || 
-      sourceLower.includes('economy') || 
-      sourceLower.includes('wsj') ||
-      sourceLower.includes('reuters') ||
-      sourceLower.includes('economist')) return 'Business & Economy'
+  // Business
+  if (sourceLower.includes('business') || sourceLower.includes('inc.com') || 
+      sourceLower.includes('fastcompany') || sourceLower.includes('hbr.org')) 
+    return 'Business'
   
-  // Health category
-  if (sourceLower.includes('medical') || 
-      sourceLower.includes('health') || 
-      sourceLower.includes('healthcare') ||
-      sourceLower.includes('doctor') ||
-      sourceLower.includes('hospital') ||
-      sourceLower.includes('clinic')) return 'Health'
+  // Travel
+  if (sourceLower.includes('travel') || sourceLower.includes('lonelyplanet') || 
+      sourceLower.includes('cntraveler')) 
+    return 'Travel'
   
-  if (sourceLower.includes('ai') || sourceLower.includes('artificial intelligence') || 
-      sourceLower.includes('machine learning') || sourceLower.includes('deepmind')) return 'AI & ML'
+  // Food & Dining
+  if (sourceLower.includes('food') || sourceLower.includes('recipe') || 
+      sourceLower.includes('dining') || sourceLower.includes('eater') ||
+      sourceLower.includes('bonappetit')) 
+    return 'Food & Dining'
   
-  if (sourceLower.includes('startup') || sourceLower.includes('ycombinator') || 
-      sourceLower.includes('indie hackers')) return 'Startups'
+  // Automotive
+  if (sourceLower.includes('auto') || sourceLower.includes('car') || 
+      sourceLower.includes('motor') || sourceLower.includes('jalopnik')) 
+    return 'Automotive'
   
-  if (sourceLower.includes('game') || sourceLower.includes('ign') || 
-      sourceLower.includes('polygon') || sourceLower.includes('esports')) return 'Gaming'
+  // Real Estate
+  if (sourceLower.includes('realtor') || sourceLower.includes('housing') || 
+      sourceLower.includes('realestate') || sourceLower.includes('therealdeal')) 
+    return 'Real Estate'
   
-  if (sourceLower.includes('security') || sourceLower.includes('hack') || 
-      sourceLower.includes('threat')) return 'Cybersecurity'
+  // Energy
+  if (sourceLower.includes('energy') || sourceLower.includes('oilprice') || 
+      sourceLower.includes('utility') || sourceLower.includes('renewable')) 
+    return 'Energy'
   
-  if (sourceLower.includes('cio') || sourceLower.includes('enterprise') || 
-      sourceLower.includes('infoworld') || sourceLower.includes('eweek')) return 'Business Tech'
-  
-  if (sourceLower.includes('entertainment') || sourceLower.includes('tmz') || 
-      sourceLower.includes('variety')) return 'Entertainment'
-  
-  if (sourceLower.includes('ndtv sports') || sourceLower.includes('sky sports') || 
-      (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))) return 'Sports'
-  
+  // Check entertainment first to avoid sports misclassification
+  if (
+    sourceLower.includes('entertainment') ||
+    sourceLower.includes('tmz') ||
+    sourceLower.includes('variety') ||
+    (sourceLower.includes('cbs') && sourceLower.includes('entertainment'))
+  ) return 'Entertainment'
+  // More specific sports matching
+  if (
+    sourceLower.includes('ndtv sports') ||
+    sourceLower.includes('sky sports') ||
+    sourceLower.includes('sportskeeda') ||
+    sourceLower.includes('sportsweez') ||
+    sourceLower.includes('deadspin') ||
+    sourceLower.includes('fox sports') ||
+    (sourceLower.includes('sports') && !sourceLower.includes('entertainment'))
+  ) return 'Sports'
   if (sourceLower.includes('techcrunch') || sourceLower.includes('gadgets')) return 'Technology'
-  
-  if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || 
-      sourceLower.includes('marketbeat')) return 'Finance'
-  
+  if (sourceLower.includes('financial') || sourceLower.includes('benzinga') || sourceLower.includes('marketbeat')) return 'Finance'
   if (sourceLower.includes('politics') || sourceLower.includes('theprint')) return 'Politics'
-  
+  if (sourceLower.includes('medical') || sourceLower.includes('medlineplus')) return 'Health'
   if (sourceLower.includes('science')) return 'Science'
-  
-  if (sourceLower.includes('world') || sourceLower.includes('bbc') || 
-      sourceLower.includes('nbc')) return 'World News'
-      
-  // New Categories
-  if (sourceLower.includes('auto') || 
-      sourceLower.includes('motor') || 
-      sourceLower.includes('car') ||
-      sourceLower.includes('electrek')) return 'Automobiles & Mobility'
-      
-  if (sourceLower.includes('travel') || 
-      sourceLower.includes('tourism') ||
-      sourceLower.includes('skift') ||
-      sourceLower.includes('lonely planet')) return 'Travel & Tourism'
-      
-  if (sourceLower.includes('lifestyle') ||
-      sourceLower.includes('lifehacker') ||
-      sourceLower.includes('well') ||
-      sourceLower.includes('mindbody')) return 'Lifestyle'
-      
-  if (sourceLower.includes('environment') ||
-      sourceLower.includes('eco') ||
-      sourceLower.includes('green') ||
-      sourceLower.includes('cleantech')) return 'Environment'
-      
-  if (sourceLower.includes('education') ||
-      sourceLower.includes('edsurge') ||
-      sourceLower.includes('chronicle') ||
-      sourceLower.includes('higher ed')) return 'Education'
-      
-  if (sourceLower.includes('law') ||
-      sourceLower.includes('legal') ||
-      sourceLower.includes('crime') ||
-      sourceLower.includes('jdsupra')) return 'Law & Crime'
-      
-  if (sourceLower.includes('gadget') ||
-      sourceLower.includes('cnet') ||
-      sourceLower.includes('engadget') ||
-      sourceLower.includes('gizmodo')) return 'Tech Gadgets & Reviews'
-  
+  if (sourceLower.includes('world') || sourceLower.includes('bbc') || sourceLower.includes('nbc')) return 'World News'
   return 'General'
 }
 
 function getKeywordsForCategory(category: string): string[] {
   const keywordMap: Record<string, string[]> = {
-      'Technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
-    'Business & Economy': ['business', 'economy', 'market', 'industry', 'trade', 'commerce', 'corporate', 'gdp', 'economic growth', 'inflation', 'employment', 'manufacturing', 'retail', 'wholesale', 'sector'],
-    'Finance': ['finance', 'stock', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'financial', 'money', 'forex', 'bonds', 'securities', 'hedge fund'],
-    'Sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
-    'Politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
-    'Health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
-    'Entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
-    'Science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
-    'World News': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis'],
-    
-      'AI & ML': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'ai models', 'nlp', 'computer vision', 'ai research', 'robotics', 'automation', 'data science', 'algorithms', 'ai applications'],
-    'Startups': ['startup', 'entrepreneur', 'venture capital', 'funding', 'seed round', 'innovation', 'tech startup', 'startup ecosystem', 'incubator', 'accelerator', 'business model', 'unicorn', 'startup founder'],
-    'Gaming': ['gaming', 'video games', 'esports', 'game development', 'console gaming', 'pc gaming', 'mobile gaming', 'game industry', 'game technology', 'virtual reality', 'augmented reality', 'gaming hardware'],
-    'Cybersecurity': ['cybersecurity', 'security', 'hacking', 'cyber attack', 'data breach', 'privacy', 'encryption', 'network security', 'information security', 'cyber defense', 'security technology', 'cyber threats'],
-    'Business Tech': ['enterprise technology', 'business software', 'cloud computing', 'digital transformation', 'saas', 'enterprise solutions', 'business intelligence', 'data analytics', 'productivity tools', 'business automation'],
-    'Automobiles & Mobility': ['automotive', 'cars', 'electric vehicles', 'ev', 'autonomous driving', 'mobility', 'transportation', 'vehicles', 'auto industry', 'motorcycles', 'bikes', 'automobile', 'tesla', 'charging'],
-    'Travel & Tourism': ['travel', 'tourism', 'vacation', 'holiday', 'hotel', 'resort', 'airline', 'destination', 'flight', 'booking', 'hospitality', 'tourist', 'adventure', 'accommodation'],
-    'Lifestyle': ['lifestyle', 'fashion', 'beauty', 'wellness', 'food', 'dining', 'recipes', 'home', 'decor', 'fitness', 'relationships', 'self-care', 'trends', 'luxury'],
-    'Environment': ['environment', 'climate change', 'sustainability', 'renewable energy', 'green technology', 'conservation', 'pollution', 'recycling', 'eco-friendly', 'biodiversity', 'carbon emissions'],
-    'Weather': ['weather', 'forecast', 'climate', 'temperature', 'precipitation', 'storm', 'meteorology', 'hurricane', 'rainfall', 'atmospheric', 'weather report'],
-    'Education': ['education', 'learning', 'school', 'university', 'college', 'academic', 'student', 'teaching', 'curriculum', 'classroom', 'e-learning', 'degree', 'training'],
-    'Law & Crime': ['law', 'legal', 'crime', 'court', 'justice', 'police', 'criminal', 'investigation', 'arrest', 'trial', 'lawsuit', 'verdict', 'prosecution', 'rights'],
-    'Religion & Spirituality': ['religion', 'faith', 'spiritual', 'belief', 'worship', 'prayer', 'meditation', 'religious', 'church', 'temple', 'mosque', 'divine', 'sacred'],
-    'Opinion & Editorial': ['opinion', 'editorial', 'commentary', 'analysis', 'perspective', 'viewpoint', 'column', 'op-ed', 'debate', 'discussion', 'critique', 'review'],
-    'Obituaries & Milestones': ['obituary', 'death', 'memorial', 'tribute', 'remembrance', 'legacy', 'milestone', 'achievement', 'anniversary', 'commemoration'],
-    'Arts & Culture': ['art', 'culture', 'museum', 'gallery', 'exhibition', 'theater', 'dance', 'music', 'literature', 'poetry', 'sculpture', 'painting', 'heritage', 'festival'],
-    'Horoscopes & Astrology': ['horoscope', 'astrology', 'zodiac', 'star sign', 'planetary', 'constellation', 'fortune', 'prediction', 'cosmic', 'astrological', 'natal chart'],
-    'Comics & Puzzles': ['comics', 'puzzle', 'crossword', 'sudoku', 'games', 'cartoons', 'riddles', 'brain teasers', 'word games', 'comic strip', 'manga'],
-    'Classifieds/Jobs': ['jobs', 'career', 'employment', 'hiring', 'recruitment', 'vacancy', 'job listing', 'classifieds', 'job market', 'position', 'opportunity'],
-    'Tech Gadgets & Reviews': ['gadgets', 'devices', 'tech review', 'consumer tech', 'electronics', 'smartphone', 'laptop', 'wearable', 'tablet', 'headphones', 'smart home']
+    'technology': ['tech', 'ai', 'artificial intelligence', 'software', 'computer', 'digital', 'internet', 'startup', 'innovation', 'cybersecurity', 'app', 'platform', 'algorithm', 'data', 'cloud'],
+    'finance': ['finance', 'business', 'economy', 'stock', 'market', 'investment', 'banking', 'cryptocurrency', 'bitcoin', 'trading', 'revenue', 'profit', 'economic', 'financial', 'money'],
+    'sports': ['football', 'soccer', 'basketball', 'tennis', 'cricket', 'olympics', 'sports', 'match', 'tournament', 'player', 'team', 'league', 'championship', 'game', 'athletic'],
+    'politics': ['politics', 'election', 'government', 'parliament', 'minister', 'policy', 'vote', 'campaign', 'political', 'congress', 'senate', 'democracy', 'law', 'legislation'],
+    'health': ['health', 'medical', 'hospital', 'doctor', 'medicine', 'virus', 'disease', 'treatment', 'healthcare', 'patient', 'clinical', 'drug', 'vaccine', 'therapy'],
+    'entertainment': ['entertainment', 'movie', 'film', 'music', 'celebrity', 'actor', 'actress', 'show', 'concert', 'hollywood', 'streaming', 'album', 'television', 'media'],
+    'science': ['science', 'research', 'study', 'discovery', 'climate', 'space', 'nasa', 'experiment', 'scientific', 'biology', 'chemistry', 'physics', 'environment', 'nature'],
+    'world': ['international', 'global', 'world', 'country', 'nation', 'foreign', 'embassy', 'diplomatic', 'war', 'conflict', 'peace', 'treaty', 'border', 'crisis'],
+    'business': ['business', 'entrepreneur', 'startup', 'company', 'corporate', 'industry', 'management', 'leadership', 'enterprise', 'commerce', 'strategy', 'innovation', 'workplace', 'executive'],
+    'travel': ['travel', 'tourism', 'destination', 'vacation', 'hotel', 'resort', 'flight', 'adventure', 'tourist', 'holiday', 'journey', 'explore', 'trip', 'cruise', 'hospitality'],
+    'food & dining': ['food', 'restaurant', 'dining', 'cuisine', 'recipe', 'chef', 'cooking', 'culinary', 'meal', 'gastronomy', 'menu', 'dishes', 'flavors', 'kitchen', 'eat'],
+    'automotive': ['car', 'vehicle', 'automotive', 'motor', 'drive', 'racing', 'electric vehicle', 'ev', 'automobile', 'transportation', 'engine', 'auto industry', 'manufacturer'],
+    'real estate': ['real estate', 'property', 'housing', 'mortgage', 'realty', 'apartment', 'home', 'commercial', 'residential', 'construction', 'development', 'lease', 'rent'],
+    'energy': ['energy', 'power', 'electricity', 'renewable', 'solar', 'wind', 'oil', 'gas', 'nuclear', 'utility', 'grid', 'sustainability', 'carbon', 'climate']
   }
   return keywordMap[category.toLowerCase()] || []
 }
@@ -298,83 +270,20 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
   // First remove duplicates
   const uniqueArticles = removeDuplicateArticles(newsItems);
   
-  // Map custom interests to main categories and gather keywords
-  const processedInterests = userInterests.map(interest => {
-    const mappedCategory = mapCustomInterestToMainCategory(interest);
-    return mappedCategory || interest;
+  // Get all relevant keywords for the selected interests
+  const keywordSets = userInterests.map(interest => {
+    const keywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || [];
+    return new Set(keywords.map(k => k.toLowerCase()));
   });
 
-  console.log('Original interests:', userInterests);
-  console.log('Processed interests:', processedInterests);
-
-    // Get all relevant keywords for the selected interests
-  const keywordSets = processedInterests.map(interest => {
-    // For predefined interests, use their keyword lists
-    const predefinedKeywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS];
-    if (predefinedKeywords) {
-      console.log(`Predefined keywords for ${interest}:`, predefinedKeywords);
-      return new Set(predefinedKeywords.map(k => k.toLowerCase()));
-    }
-    
-    // For custom interests, create keywords from the interest itself
-    const customKeywords = new Set([
-      interest.toLowerCase(),
-      ...interest.toLowerCase().split(/[\s-]+/), // Split on spaces and hyphens
-    ]);
-    console.log(`Custom keywords for ${interest}:`, Array.from(customKeywords));
-    return customKeywords;
-  });
-
-  // Add variations of the original terms as keywords
-  userInterests.forEach(interest => {
-    const variations = new Set([
-      interest.toLowerCase(),
-      ...interest.toLowerCase().split(/[\s-]+/),
-      interest.toLowerCase().replace(/[^a-z0-9]/g, ''), // Remove special characters
-    ]);
-    console.log(`Keyword variations for ${interest}:`, Array.from(variations));
-    keywordSets.push(variations);
-  });  // Filter articles based on keyword matches
+  // Filter articles based on keyword matches
   const filteredArticles = uniqueArticles.filter(article => {
     const content = (article.title + " " + article.description).toLowerCase();
-    const category = article.category.toLowerCase();
     
-    // Debug log for article processing
-    console.log(`Processing article: "${article.title}" (Category: ${category})`);
-    
-    // For each interest, try to map it to a main category if it's custom
-    for (const interest of processedInterests) {
-      // First check direct category match
-      if (category.toLowerCase() === interest.toLowerCase()) {
-        console.log(`Direct category match found: ${category} matches interest ${interest}`);
-        return true;
-      }
-      
-      // Try mapping custom interest to main category
-      const mappedCategory = mapCustomInterestToMainCategory(interest);
-      if (mappedCategory) {
-        console.log(`Mapped custom interest "${interest}" to category "${mappedCategory}"`);
-        if (category.toLowerCase() === mappedCategory.toLowerCase()) {
-          console.log(`Mapped category match found: ${category} matches mapped interest ${mappedCategory}`);
-          return true;
-        }
-      }
-    }
-    
-    
-    // Check keyword matches
-    const keywordMatch = keywordSets.some(keywords => {
-      const matchingKeyword = Array.from(keywords).find(keyword => 
-        content.includes(keyword) || category.includes(keyword)
-      );
-      if (matchingKeyword) {
-        console.log(`Keyword match found: "${matchingKeyword}" in article`);
-        return true;
-      }
-      return false;
-    });
-    
-    return keywordMatch;
+    // Check if the article matches keywords from any selected interest
+    return keywordSets.some(keywords => 
+      Array.from(keywords).some(keyword => content.includes(keyword))
+    );
   });
 
   // Add debug information
@@ -467,85 +376,30 @@ serve(async (req) => {
         .maybeSingle()
 
       if (preferences) {
-        // Process interests
-        const processedInterests = new Set<string>();
-        
-        // Add predefined interests directly
-        preferences.interests?.forEach(interest => processedInterests.add(interest));
-        
-        // Process custom interests with fallback logic
-        if (preferences.custom_interests?.length) {
-          const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-          
-          for (const customInterest of preferences.custom_interests) {
-            // Try Gemini mapping first if API key is available
-            if (geminiApiKey) {
-              try {
-                const mappedCategories = await mapInterestToCategories(customInterest, geminiApiKey);
-                if (mappedCategories.length > 0) {
-                  mappedCategories.forEach(category => processedInterests.add(category));
-                  // Keep original interest for display
-                  processedInterests.add(customInterest);
-                  console.log(`Gemini mapped "${customInterest}" to categories:`, mappedCategories);
-                  continue;
-                }
-              } catch (error) {
-                console.error(`Gemini mapping failed for "${customInterest}":`, error);
-              }
-            }
-            
-            // Fallback: Try direct category mapping
-            const mappedCategory = mapCustomInterestToMainCategory(customInterest);
-            if (mappedCategory) {
-              processedInterests.add(mappedCategory);
-              // Keep original interest for display
-              processedInterests.add(customInterest);
-              console.log(`Direct mapping: "${customInterest}" -> "${mappedCategory}"`);
-            } else {
-              // If no mapping found, keep as custom interest
-              processedInterests.add(customInterest);
-              console.log(`Using custom interest as-is: "${customInterest}"`);
-            }
-          }
-        }
-
-        const combined = Array.from(processedInterests);
-        if (combined.length > 0) userInterests = combined;
+        const combined = [...(preferences.interests || []), ...(preferences.custom_interests || [])]
+        if (combined.length > 0) userInterests = combined
       }
     }
 
-    // Debug info for predefined interests
-    const debugKeywords = userInterests.flatMap(interest => 
-      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
-    );
+    // Get expanded keywords for custom interests
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    let debugKeywords = null;
+    let debugKeywordSource = null;
 
-    // Separate standard and custom interests
-    const standardInterests = userInterests.filter(interest => INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS]);
-    const customInterests = userInterests.filter(interest => !INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS]);
+    if (customInterests.length > 0) {
+      try {
+        const { keywords, source } = await getExpandedKeywords(customInterests[0]);
+        debugKeywords = keywords;
+        debugKeywordSource = source;
+      } catch (error) {
+        console.error('Error getting debug keywords:', error);
+      }
+    }
 
-    // Handle standard interests
-    const standardFilteredArticles = standardInterests.length > 0 
-      ? await filterNewsByInterests(allArticles, standardInterests)
-      : [];
+    // Use direct filtering approach
+    const filteredArticles = await filterNewsByInterests(allArticles, userInterests);
 
-    // Handle custom interests
-    const customFilteredArticles = await Promise.all(
-      customInterests.map(async interest => {
-        const filtered = await filterArticlesForCustomInterest(allArticles, interest);
-        return filtered;
-      })
-    ).then(results => results.flat());
-
-    // Combine and remove duplicates
-    const filteredArticles = removeDuplicateArticles([
-      ...standardFilteredArticles,
-      ...customFilteredArticles
-    ]);
-
-    console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests:`, {
-      standard: standardInterests.join(', '),
-      custom: customInterests.join(', ')
-    });
+    console.log(`Filtered ${filteredArticles.length} articles from ${allArticles.length} based on interests: ${userInterests.join(', ')}`);
 
     // Personalize with Gemini
     const personalizedArticles = await personalizeWithGemini(
@@ -574,9 +428,15 @@ serve(async (req) => {
     const debugInfo = filteredArticles.length > 0 ? (filteredArticles[0] as any).debug || null : null;
 
     // Get filtering keywords from filtered articles
-    const keywords = userInterests.flatMap(interest => 
-      INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
-    );
+    const keywords = filteredArticles
+      .filter(article => (article as any).debug?.keywords)
+      .map(article => (article as any).debug.keywords)
+      .flat();
+
+    // Get keyword sources if available
+    const keywordSources = filteredArticles
+      .filter(article => (article as any).debug?.keywordSource)
+      .map(article => (article as any).debug.keywordSource);
 
     // Log debug info
     console.log('Debug info:', {
@@ -591,21 +451,9 @@ serve(async (req) => {
       INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || []
     );
 
-    // Preserve original custom interests in article labels
-    const labeledArticles = personalizedArticles.map(article => {
-      if (requestedInterests?.length === 1 && !PREDEFINED_INTERESTS.has(requestedInterests[0])) {
-        // If there's exactly one custom interest, use it as the label
-        return {
-          ...article,
-          displayCategory: requestedInterests[0] // Original custom interest as display category
-        };
-      }
-      return article;
-    });
-
     return new Response(
       JSON.stringify({ 
-        articles: labeledArticles.slice(0, MAX_RETURNED),
+        articles: personalizedArticles.slice(0, MAX_RETURNED),
         interests: userInterests,
         debug: {
           totalFetched: allArticles.length,

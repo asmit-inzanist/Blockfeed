@@ -10,7 +10,11 @@ interface InterestsSelectorProps {
   onInterestsChange: (interests: string[]) => void;
 }
 
-const PREDEFINED_INTERESTS = ['Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News'];
+const PREDEFINED_INTERESTS = [
+  'Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 
+  'Science', 'World News', 'Business', 'Travel', 'Food & Dining', 'Automotive',
+  'Real Estate', 'Energy'
+];
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
   const [isOpen, setIsOpen] = useState(false);

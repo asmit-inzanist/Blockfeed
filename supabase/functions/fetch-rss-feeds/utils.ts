@@ -1,4 +1,4 @@
-import { Article } from './types.ts'
+import { Article } from './types'
 
 export function removeDuplicateArticles(articles: Article[]): Article[] {
   const seen = new Map<string, Article>();
@@ -25,104 +25,6 @@ export function normalizeString(str: string): string {
     // Remove extra whitespace
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-export function mapCustomInterestToMainCategory(customInterest: string): string | null {
-  const normalizedInterest = normalizeString(customInterest);
-  
-  // Define mappings of common terms to main categories
-  const categoryMappings: Record<string, string[]> = {
-    'Health': [
-      'medical', 'doctor', 'hospital', 'medicine', 'clinic', 'patient', 'disease',
-      'treatment', 'healthcare', 'therapy', 'wellness', 'physician', 'dental',
-      'pharmaceutical', 'drugs', 'surgery', 'nursing', 'mental health'
-    ],
-    'Technology': [
-      'tech', 'computer', 'software', 'digital', 'programming', 'code', 'web',
-      'app', 'mobile', 'device', 'gadget', 'hardware', 'internet', 'online',
-      'network', 'system', 'database', 'cloud'
-    ],
-    'Finance': [
-      'money', 'banking', 'investment', 'stock', 'market', 'trading', 'financial',
-      'economic', 'economy', 'business', 'fund', 'crypto', 'bitcoin', 'investor',
-      'wealth', 'fintech', 'bank'
-    ],
-    'Gaming': [
-      'game', 'gaming', 'playstation', 'xbox', 'nintendo', 'console', 'esports',
-      'moba', 'rpg', 'shooter', 'steam', 'twitch', 'gamer', 'gameplay'
-    ],
-    'Sports': [
-      'sport', 'football', 'soccer', 'basketball', 'tennis', 'cricket', 'athlete',
-      'player', 'team', 'match', 'tournament', 'championship', 'league', 'racing',
-      'olympic', 'fitness'
-    ],
-    'Entertainment': [
-      'movie', 'film', 'tv', 'television', 'show', 'series', 'actor', 'actress',
-      'celebrity', 'music', 'song', 'concert', 'streaming', 'hollywood', 'drama',
-      'comedy', 'entertainment'
-    ],
-    'Science': [
-      'science', 'research', 'study', 'experiment', 'lab', 'discovery', 'physics',
-      'chemistry', 'biology', 'space', 'astronomy', 'environment', 'climate',
-      'scientist', 'theory'
-    ],
-    'Politics': [
-      'politic', 'government', 'election', 'vote', 'party', 'policy', 'law',
-      'legislation', 'parliament', 'congress', 'senate', 'minister', 'president',
-      'democracy', 'diplomatic'
-    ],
-    'World News': [
-      'world', 'global', 'international', 'foreign', 'country', 'nation',
-      'worldwide', 'overseas', 'abroad', 'diplomatic', 'embassy', 'border'
-    ],
-    'Cybersecurity': [
-      'security', 'cyber', 'hack', 'breach', 'malware', 'virus', 'encryption',
-      'firewall', 'password', 'privacy', 'protection', 'threat', 'ransomware'
-    ],
-    'AI & ML': [
-      'ai', 'artificial intelligence', 'machine learning', 'neural', 'deep learning',
-      'algorithm', 'robot', 'automation', 'nlp', 'computer vision', 'ml'
-    ],
-    'Startups': [
-      'startup', 'entrepreneur', 'venture', 'founder', 'seed', 'incubator',
-      'accelerator', 'unicorn', 'funding', 'innovation', 'disrupt'
-    ],
-    'Business Tech': [
-      'enterprise', 'saas', 'cloud', 'business software', 'erp', 'crm',
-      'productivity', 'workflow', 'automation', 'analytics', 'dashboard'
-    ]
-  };
-
-  // First check if the interest directly matches a main category name
-  const matchingCategory = Object.keys(categoryMappings).find(category =>
-    normalizeString(category) === normalizedInterest ||
-    normalizeString(category).includes(normalizedInterest) ||
-    normalizedInterest.includes(normalizeString(category))
-  );
-  
-  if (matchingCategory) {
-    console.log(`Direct category match found: ${matchingCategory}`);
-    return matchingCategory;
-  }
-
-  // Then check each category's terms for a match
-  for (const [category, terms] of Object.entries(categoryMappings)) {
-    if (terms.some(term => {
-      const normalizedTerm = normalizeString(term);
-      return normalizedInterest.includes(normalizedTerm) || 
-             normalizedTerm.includes(normalizedInterest) ||
-             // Check for close matches (e.g., "medical" matches "medicine")
-             (normalizedTerm.length > 4 && 
-              normalizedInterest.length > 4 && 
-              (normalizedTerm.startsWith(normalizedInterest.slice(0, 5)) ||
-               normalizedInterest.startsWith(normalizedTerm.slice(0, 5))));
-    })) {
-      console.log(`Term match found in category: ${category}`);
-      return category;
-    }
-  }
-
-  return null; // Return null if no mapping found
 }
 
 export function calculateArticleSimilarity(title1: string, title2: string): number {

@@ -12,7 +12,6 @@ export interface Article {
   link: string;
   source: string;
   category: string;
-  displayCategory?: string;  // For showing custom interest labels
   publishedAt?: string;
   ai_score?: number;
 }
