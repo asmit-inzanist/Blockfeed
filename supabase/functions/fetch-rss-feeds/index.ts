@@ -185,7 +185,39 @@ function parseRSSFeed(xmlText: string, source: string): Article[] {
 function getCategoryFromSource(source: string): string {
   const sourceLower = source.toLowerCase()
   
-  // Business
+  // Check specialized tech categories first to avoid misclassification as general tech
+  // Business Tech
+  if (sourceLower.includes('cio') || sourceLower.includes('informationweek') || 
+      sourceLower.includes('eweek') || sourceLower.includes('computerworld') ||
+      sourceLower.includes('infoworld') || sourceLower.includes('enterprise') ||
+      (sourceLower.includes('business') && sourceLower.includes('tech')))
+    return 'Business Tech'
+
+  // Health Tech
+  if (sourceLower.includes('digitalhealth') || sourceLower.includes('healthit') || 
+      sourceLower.includes('mobihealth') || sourceLower.includes('medical futurist') ||
+      (sourceLower.includes('health') && sourceLower.includes('tech')))
+    return 'Health Tech'
+
+  // Sports Tech
+  if (sourceLower.includes('sporttechie') || sourceLower.includes('sports technology') || 
+      sourceLower.includes('stack sports') || 
+      (sourceLower.includes('sports') && sourceLower.includes('tech')))
+    return 'Sports Tech'
+
+  // Cybersecurity
+  if (sourceLower.includes('security') || sourceLower.includes('krebs') || 
+      sourceLower.includes('hack') || sourceLower.includes('threat') ||
+      sourceLower.includes('cyber') || sourceLower.includes('infosec'))
+    return 'Cybersecurity'
+
+  // Gaming
+  if (sourceLower.includes('gaming') || sourceLower.includes('game') || 
+      sourceLower.includes('polygon') || sourceLower.includes('ign') ||
+      sourceLower.includes('eurogamer') || sourceLower.includes('pc gamer'))
+    return 'Gaming'
+
+  // Business (after Business Tech to avoid misclassification)
   if (sourceLower.includes('business') || sourceLower.includes('inc.com') || 
       sourceLower.includes('fastcompany') || sourceLower.includes('hbr.org')) 
     return 'Business'
@@ -296,10 +328,14 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
 
   // First remove duplicates
   const uniqueArticles = removeDuplicateArticles(newsItems);
-  
+
   // Get all relevant keywords for the selected interests
   const keywordSets = userInterests.map(interest => {
-    // Match case-insensitively with the INTEREST_KEYWORDS keys
+    // First try exact match (case-sensitive)
+    if (INTEREST_KEYWORDS[interest]) {
+      return new Set(INTEREST_KEYWORDS[interest].map(k => k.toLowerCase()));
+    }
+    // If no exact match, try case-insensitive match
     const matchingKey = Object.keys(INTEREST_KEYWORDS).find(
       k => k.toLowerCase() === interest.toLowerCase()
     );
@@ -474,7 +510,16 @@ serve(async (req) => {
       filteredCount: filteredArticles.length,
       hasKeywords: keywords.length > 0,
       keywordCount: keywords.length,
-      sampleKeywords: keywords.slice(0, 10)
+      sampleKeywords: keywords.slice(0, 10),
+      categories: Array.from(new Set(filteredArticles.map(a => a.category))),
+      interestMatches: userInterests.map(interest => ({
+        interest,
+        matchedArticles: filteredArticles.filter(a => 
+          a.category === interest || 
+          a.category === interest.toLowerCase() ||
+          (a.title + a.description).toLowerCase().includes(interest.toLowerCase())
+        ).length
+      }))
     });
 
     // Get keywords used for filtering
