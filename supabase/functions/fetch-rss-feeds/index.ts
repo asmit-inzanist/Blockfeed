@@ -2,9 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { getGeminiKey, PREDEFINED_INTERESTS, INTEREST_KEYWORDS } from './config'
 import { Article } from './types'
-import { filterArticlesForCustomInterest, getExpandedKeywords } from './directFilter'
-import { removeDuplicateArticles } from './utils'
-import { scoreArticles } from './gemini'
+import { filterArticlesForCustomInterest, getExp    // Get custom interests and their keywords
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    let filteringKeywords = [];
 
     if (customInterests.length > 0) {
       try {
@@ -217,45 +217,35 @@ function getCategoryFromSource(source: string): string {
       sourceLower.includes('eurogamer') || sourceLower.includes('pc gamer'))
     return 'Gaming'
 
-  // Business
+  // Business (after Business Tech to avoid misclassification)
   if (sourceLower.includes('business') || sourceLower.includes('inc.com') || 
-      sourceLower.includes('fastcompany') || sourceLower.includes('hbr.org') ||
-      sourceLower.includes('entrepreneur') || sourceLower.includes('forbes') ||
-      sourceLower.includes('bloomberg'))
+      sourceLower.includes('fastcompany') || sourceLower.includes('hbr.org')) 
     return 'Business'
-
+  
   // Travel
-  if (sourceLower.includes('travel') || sourceLower.includes('tourism') ||
-      sourceLower.includes('lonelyplanet') || sourceLower.includes('cntraveler') ||
-      sourceLower.includes('tripadvisor') || sourceLower.includes('voyage'))
+  if (sourceLower.includes('travel') || sourceLower.includes('lonelyplanet') || 
+      sourceLower.includes('cntraveler')) 
     return 'Travel'
-
+  
   // Food & Dining
-  if (sourceLower.includes('food') || sourceLower.includes('recipe') ||
+  if (sourceLower.includes('food') || sourceLower.includes('recipe') || 
       sourceLower.includes('dining') || sourceLower.includes('eater') ||
-      sourceLower.includes('culinary') || sourceLower.includes('gastro') ||
-      sourceLower.includes('bonappetit') || sourceLower.includes('kitchen'))
+      sourceLower.includes('bonappetit')) 
     return 'Food & Dining'
-
+  
   // Automotive
-  if (sourceLower.includes('auto') || sourceLower.includes('car') ||
-      sourceLower.includes('motor') || sourceLower.includes('jalopnik') ||
-      sourceLower.includes('vehicle') || sourceLower.includes('automotive') ||
-      sourceLower.includes('drive'))
+  if (sourceLower.includes('auto') || sourceLower.includes('car') || 
+      sourceLower.includes('motor') || sourceLower.includes('jalopnik')) 
     return 'Automotive'
-
+  
   // Real Estate
-  if (sourceLower.includes('realtor') || sourceLower.includes('housing') ||
-      sourceLower.includes('realestate') || sourceLower.includes('therealdeal') ||
-      sourceLower.includes('property') || sourceLower.includes('estate') ||
-      sourceLower.includes('zillow'))
+  if (sourceLower.includes('realtor') || sourceLower.includes('housing') || 
+      sourceLower.includes('realestate') || sourceLower.includes('therealdeal')) 
     return 'Real Estate'
-
+  
   // Energy
-  if (sourceLower.includes('energy') || sourceLower.includes('oilprice') ||
-      sourceLower.includes('utility') || sourceLower.includes('renewable') ||
-      sourceLower.includes('power') || sourceLower.includes('electricity') ||
-      sourceLower.includes('solar') || sourceLower.includes('wind power'))
+  if (sourceLower.includes('energy') || sourceLower.includes('oilprice') || 
+      sourceLower.includes('utility') || sourceLower.includes('renewable')) 
     return 'Energy'
 
   // Gaming
@@ -459,10 +449,7 @@ serve(async (req) => {
     }
 
     // Get expanded keywords for custom interests
-    const predefinedSet = new Set(PREDEFINED_INTERESTS);
-    const customInterests = userInterests.filter(i => 
-      !PREDEFINED_INTERESTS.includes(i as typeof PREDEFINED_INTERESTS[number])
-    );
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.includes(i));
     let debugKeywords = null;
     let debugKeywordSource = null;
 
