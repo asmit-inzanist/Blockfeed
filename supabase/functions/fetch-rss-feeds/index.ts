@@ -207,19 +207,34 @@ function filterNewsByInterests(newsItems: Article[], userInterests: string[]): A
   console.log('Original interests:', userInterests);
   console.log('Processed interests:', processedInterests);
 
-  // Get all relevant keywords for the selected interests
+    // Get all relevant keywords for the selected interests
   const keywordSets = processedInterests.map(interest => {
-    const keywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS] || [];
-    console.log(`Keywords for ${interest}:`, keywords);
-    return new Set(keywords.map(k => k.toLowerCase()));
+    // For predefined interests, use their keyword lists
+    const predefinedKeywords = INTEREST_KEYWORDS[interest as keyof typeof INTEREST_KEYWORDS];
+    if (predefinedKeywords) {
+      console.log(`Predefined keywords for ${interest}:`, predefinedKeywords);
+      return new Set(predefinedKeywords.map(k => k.toLowerCase()));
+    }
+    
+    // For custom interests, create keywords from the interest itself
+    const customKeywords = new Set([
+      interest.toLowerCase(),
+      ...interest.toLowerCase().split(/[\s-]+/), // Split on spaces and hyphens
+    ]);
+    console.log(`Custom keywords for ${interest}:`, Array.from(customKeywords));
+    return customKeywords;
   });
 
-  // Add the original terms as keywords too
+  // Add variations of the original terms as keywords
   userInterests.forEach(interest => {
-    keywordSets.push(new Set([interest.toLowerCase()]));
-  });
-
-  // Filter articles based on keyword matches
+    const variations = new Set([
+      interest.toLowerCase(),
+      ...interest.toLowerCase().split(/[\s-]+/),
+      interest.toLowerCase().replace(/[^a-z0-9]/g, ''), // Remove special characters
+    ]);
+    console.log(`Keyword variations for ${interest}:`, Array.from(variations));
+    keywordSets.push(variations);
+  });  // Filter articles based on keyword matches
   const filteredArticles = uniqueArticles.filter(article => {
     const content = (article.title + " " + article.description).toLowerCase();
     const category = article.category.toLowerCase();
@@ -347,28 +362,38 @@ serve(async (req) => {
         // Add predefined interests directly
         preferences.interests?.forEach(interest => processedInterests.add(interest));
         
-        // Process custom interests using Gemini
+        // Process custom interests with fallback logic
         if (preferences.custom_interests?.length) {
           const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-          if (geminiApiKey) {
-            for (const customInterest of preferences.custom_interests) {
+          
+          for (const customInterest of preferences.custom_interests) {
+            // Try Gemini mapping first if API key is available
+            if (geminiApiKey) {
               try {
-                // Get category mappings from Gemini
                 const mappedCategories = await mapInterestToCategories(customInterest, geminiApiKey);
-                
                 if (mappedCategories.length > 0) {
-                  // Add mapped categories for filtering
                   mappedCategories.forEach(category => processedInterests.add(category));
-                  console.log(`Gemini mapped "${customInterest}" to categories:`, mappedCategories);
-                } else {
-                  // If no mapping found, keep the custom interest as is
+                  // Keep original interest for display
                   processedInterests.add(customInterest);
-                  console.log(`No category mapping found for "${customInterest}"`);
+                  console.log(`Gemini mapped "${customInterest}" to categories:`, mappedCategories);
+                  continue;
                 }
               } catch (error) {
-                console.error(`Error processing custom interest "${customInterest}":`, error);
-                processedInterests.add(customInterest);
+                console.error(`Gemini mapping failed for "${customInterest}":`, error);
               }
+            }
+            
+            // Fallback: Try direct category mapping
+            const mappedCategory = mapCustomInterestToMainCategory(customInterest);
+            if (mappedCategory) {
+              processedInterests.add(mappedCategory);
+              // Keep original interest for display
+              processedInterests.add(customInterest);
+              console.log(`Direct mapping: "${customInterest}" -> "${mappedCategory}"`);
+            } else {
+              // If no mapping found, keep as custom interest
+              processedInterests.add(customInterest);
+              console.log(`Using custom interest as-is: "${customInterest}"`);
             }
           }
         }
