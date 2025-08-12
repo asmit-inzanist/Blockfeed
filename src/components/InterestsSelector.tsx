@@ -11,10 +11,29 @@ interface InterestsSelectorProps {
 }
 
 const PREDEFINED_INTERESTS = [
-  'Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 
-  'Science', 'World News', 'Business', 'Travel', 'Food & Dining', 'Automotive',
-  'Real Estate', 'Energy', 'Gaming', 'Cybersecurity', 'Business Tech', 
-  'Health Tech', 'Sports Tech'
+  // Core Categories
+  'Technology', 'Finance', 'Sports', 'Politics', 'Health', 'Entertainment', 'Science', 'World News',
+  
+  // Tech & Business
+  'AI & ML', 'Startups', 'Gaming', 'Cybersecurity', 'Business Tech', 'Business & Economy', 'Tech Gadgets & Reviews',
+  
+  // Lifestyle & Culture
+  'Arts & Culture', 'Lifestyle', 'Travel & Tourism', 
+  
+  // Transportation
+  'Automobiles & Mobility',
+  
+  // Environment & Weather
+  'Environment', 'Weather',
+  
+  // Education & Career
+  'Education', 'Classifieds/Jobs',
+  
+  // Law & Society
+  'Law & Crime', 'Religion & Spirituality',
+  
+  // Media & Entertainment
+  'Opinion & Editorial', 'Comics & Puzzles', 'Horoscopes & Astrology', 'Obituaries & Milestones'
 ];
 
 const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInterestsChange }) => {
@@ -66,7 +85,7 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
           Edit Interests
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Your Interests</DialogTitle>
         </DialogHeader>
@@ -94,7 +113,7 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
             </div>
           </div>
 
-          {/* Predefined Interests */}
+          {/* All Categories */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">Popular Categories</h4>

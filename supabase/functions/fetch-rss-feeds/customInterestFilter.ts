@@ -38,10 +38,25 @@ function expandKeywords(interest: string): string[] {
   return Array.from(expansions);
 }
 
-// Helper function to check if an article matches any keywords
-function articleContainsKeywords(article: Article, keywords: string[]): boolean {
-  const content = (article.title + ' ' + article.description).toLowerCase();
-  return keywords.some(keyword => content.includes(keyword.toLowerCase()));
+// Helper function to check if an article matches any keywords with title weighting
+function articleContainsKeywords(article: Article, keywords: string[]): { matches: boolean; titleMatch: boolean } {
+  const title = article.title.toLowerCase();
+  const description = article.description.toLowerCase();
+  
+  // Check title matches first (more important)
+  const titleMatch = keywords.some(keyword => 
+    title.includes(keyword.toLowerCase())
+  );
+
+  // Check full content matches
+  const contentMatch = keywords.some(keyword => 
+    description.includes(keyword.toLowerCase())
+  );
+
+  return {
+    matches: titleMatch || contentMatch,
+    titleMatch: titleMatch
+  };
 }
 
 // Helper function to batch score articles using Gemini
@@ -94,10 +109,18 @@ export async function filterRelevantArticles(
   const keywords = expandKeywords(userInterest);
   console.log('Expanded keywords for', userInterest, ':', keywords);
   
-  const keywordMatches = articles.filter(article => 
-    articleContainsKeywords(article, keywords)
-  );
+  // Filter articles with metadata about match quality
+  const keywordMatches = articles.map(article => {
+    const matchResult = articleContainsKeywords(article, keywords);
+    return {
+      article,
+      matches: matchResult.matches,
+      titleMatch: matchResult.titleMatch
+    };
+  }).filter(result => result.matches);
+
   console.log('Articles matching keywords:', keywordMatches.length);
+  console.log('Title matches:', keywordMatches.filter(m => m.titleMatch).length);
 
   if (keywordMatches.length === 0) {
     return [];
@@ -108,23 +131,31 @@ export async function filterRelevantArticles(
   const scoredArticles: ScoredArticle[] = [];
   
   for (let i = 0; i < keywordMatches.length; i += BATCH_SIZE) {
-    const batch = keywordMatches.slice(i, i + BATCH_SIZE);
+    const batchItems = keywordMatches.slice(i, i + BATCH_SIZE);
+    const batchArticles = batchItems.map(item => item.article);
+    
     try {
-      const scores = await scoreArticlesBatch(batch, userInterest, geminiApiKey);
+      const scores = await scoreArticlesBatch(batchArticles, userInterest, geminiApiKey);
       
-      batch.forEach((article, index) => {
+      batchItems.forEach((item, index) => {
+        // Boost score for title matches
+        let finalScore = scores[index];
+        if (item.titleMatch) {
+          finalScore = Math.min(10, finalScore + 2); // Boost score by 2 for title matches
+        }
+        
         scoredArticles.push({
-          ...article,
-          relevanceScore: scores[index]
+          ...item.article,
+          relevanceScore: finalScore
         });
       });
     } catch (error) {
       console.error('Error processing batch:', error);
       // On error, add articles with neutral scores
-      batch.forEach(article => {
+      batchItems.forEach(item => {
         scoredArticles.push({
-          ...article,
-          relevanceScore: 5
+          ...item.article,
+          relevanceScore: item.titleMatch ? 7 : 5 // Higher default score for title matches
         });
       });
     }
