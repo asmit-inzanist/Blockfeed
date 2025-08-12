@@ -355,9 +355,31 @@ const TodaysFeeds = () => {
         <Header />
         
         <div className="container max-w-4xl mx-auto px-4 py-12 pt-24">
-          <div className="text-center">
-            <div className="animate-pulse">Loading your personalized feed...</div>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              YOUR PERSONALIZED FEED
+            </h1>
+            <p className="text-muted-foreground">
+              AI is curating your stories...
+            </p>
           </div>
+          
+          {/* Loading Placeholders */}
+          {[1, 2, 3].map((_, index) => (
+            <div key={index} className="bg-card border rounded-lg p-6 mb-6 animate-pulse">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-6 w-20 bg-accent rounded"></div>
+                  <div className="h-4 w-24 bg-muted-foreground/20 rounded"></div>
+                </div>
+              </div>
+              <div className="h-7 w-3/4 bg-accent/20 rounded mb-3"></div>
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted-foreground/20 rounded"></div>
+                <div className="h-4 w-5/6 bg-muted-foreground/20 rounded"></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
