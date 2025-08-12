@@ -85,6 +85,24 @@ Blockfeed/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## Deployment
+
+This project is configured for deployment on Vercel. To deploy:
+
+1. Push your code to GitHub
+2. Import your repository in Vercel
+3. Set up the following environment variables in your Vercel project settings:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+4. Deploy!
+
+The deployment will automatically handle:
+- Build optimization
+- Asset compression
+- SPA routing
+- HTTPS by default
+- Edge CDN distribution
+
 ## License
 
 Copyright © 2025 BlockFeed. All rights reserved.
