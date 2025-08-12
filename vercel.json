@@ -1,28 +1,24 @@
 {
-  "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "handle": "filesystem"
+      "source": "/auth",
+      "destination": "/"
     },
     {
-      "src": "/auth",
-      "dest": "/"
+      "source": "/account",
+      "destination": "/"
     },
     {
-      "src": "/account",
-      "dest": "/"
+      "source": "/todays-feeds",
+      "destination": "/"
     },
     {
-      "src": "/todays-feeds",
-      "dest": "/"
+      "source": "/features",
+      "destination": "/"
     },
     {
-      "src": "/features",
-      "dest": "/"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
+      "source": "/(.*)",
+      "destination": "/"
     }
   ],
   "headers": [
