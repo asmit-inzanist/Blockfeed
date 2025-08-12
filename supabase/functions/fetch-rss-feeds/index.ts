@@ -382,7 +382,7 @@ serve(async (req) => {
     }
 
     // Get expanded keywords for custom interests
-    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.has(i));
+    const customInterests = userInterests.filter(i => !PREDEFINED_INTERESTS.includes(i));
     let debugKeywords = null;
     let debugKeywordSource = null;
 
