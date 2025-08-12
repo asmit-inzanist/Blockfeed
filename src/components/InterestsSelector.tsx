@@ -151,20 +151,20 @@ const InterestsSelector: React.FC<InterestsSelectorProps> = ({ interests, onInte
 
           {/* Topic Suggestion Form */}
           <div>
-            <h4 className="text-sm font-medium mb-3">Want to suggest a topic?</h4>
-            <div className="space-y-4">
+            <h4 className="text-sm font-medium mb-2">Want to suggest a topic?</h4>
+            <div className="space-y-2">
               <Textarea 
                 placeholder="Tell us what topics you'd like to see in your feed..."
-                className="min-h-[100px] resize-none"
+                className="min-h-[60px] max-h-[60px] resize-none text-sm"
                 value={customInterest}
                 onChange={(e) => setCustomInterest(e.target.value)}
               />
               <Button 
-                className="w-full" 
+                className="w-full h-8 text-sm" 
                 onClick={handleSendSuggestion}
                 disabled={!customInterest.trim()}
               >
-                <Send className="w-4 h-4 mr-2" />
+                <Send className="w-3 h-3 mr-2" />
                 Send Suggestion
               </Button>
             </div>
