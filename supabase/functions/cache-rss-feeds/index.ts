@@ -34,7 +34,20 @@ serve(async (req) => {
     // Flatten all feeds
     const flatFeeds = allFeeds.flat()
 
-    // Insert feeds into cache table
+    console.log('Preparing to cache feeds:', flatFeeds.length);
+    
+    // Delete old feeds for these categories
+    const { error: deleteError } = await supabaseClient
+      .from('cached_feeds')
+      .delete()
+      .in('category', CATEGORIES);
+      
+    if (deleteError) {
+      console.error('Error deleting old feeds:', deleteError);
+      throw deleteError;
+    }
+    
+    // Insert new feeds into cache table
     const { error } = await supabaseClient
       .from('cached_feeds')
       .upsert(
@@ -45,7 +58,8 @@ serve(async (req) => {
           link: feed.link,
           source: feed.source,
           ai_score: feed.ai_score || 75,
-          published_at: feed.publishedAt || new Date().toISOString()
+          published_at: feed.publishedAt || new Date().toISOString(),
+          created_at: new Date().toISOString()
         })),
         { onConflict: 'link' }
       )

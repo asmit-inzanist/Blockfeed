@@ -151,34 +151,62 @@ const TodaysFeeds = () => {
       setLoading(true);
       const categoriesToUse = interests || userInterests;
       
+      console.log('Fetching feeds for categories:', categoriesToUse);
+      
       // First try to get cached feeds
+      const startCacheTime = performance.now();
       const { data: cachedFeeds, error: cacheError } = await supabase
         .from('cached_feeds')
         .select('*')
         .in('category', categoriesToUse)
         .order('published_at', { ascending: false })
         .limit(25);
+      const endCacheTime = performance.now();
+      
+      console.log(`Cache query took ${(endCacheTime - startCacheTime).toFixed(2)}ms`);
 
-      if (cacheError) throw cacheError;
+      if (cacheError) {
+        console.error('Cache error:', cacheError);
+        throw cacheError;
+      }
 
+      console.log('Found cached feeds:', cachedFeeds?.length || 0);
+      
       if (cachedFeeds && cachedFeeds.length > 0) {
-        console.log('Using cached feeds:', cachedFeeds.length);
+        console.log('Using cached feeds');
+        console.log('Sample cached article:', cachedFeeds[0]);
         setAllNews(cachedFeeds);
         setArticles(cachedFeeds);
+        setLoading(false);
         return;
       }
 
-      // Fallback to direct RSS fetch if cache is empty
+      console.log('No cache found, fetching fresh data...');
+      const startFetchTime = performance.now();
+      
+      // Trigger cache refresh
+      await supabase.functions.invoke('cache-rss-feeds', {
+        body: { categories: categoriesToUse }
+      });
+      
+      // Fallback to direct RSS fetch while cache is being populated
       const { data, error } = await supabase.functions.invoke('fetch-rss-feeds', {
         body: { categories: categoriesToUse }
       });
 
-      if (error) throw error;
+      const endFetchTime = performance.now();
+      console.log(`Direct fetch took ${(endFetchTime - startFetchTime).toFixed(2)}ms`);
+
+      if (error) {
+        console.error('Fetch error:', error);
+        throw error;
+      }
 
       const fetchedArticles = data.articles || [];
       const customTerms = data.customTerms || [];
       
       console.log('Fetched fresh articles:', fetchedArticles.length);
+      console.log('Sample fresh article:', fetchedArticles[0]);
       console.log('Custom terms:', customTerms);
       
       setAllNews(fetchedArticles);
