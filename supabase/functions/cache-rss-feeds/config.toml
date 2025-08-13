@@ -1,0 +1,3 @@
+[functions.cache-rss-feeds]
+verify_jwt = false
+schedule = "*/20 * * * *"  # Run every 20 minutes

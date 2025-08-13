@@ -151,6 +151,24 @@ const TodaysFeeds = () => {
       setLoading(true);
       const categoriesToUse = interests || userInterests;
       
+      // First try to get cached feeds
+      const { data: cachedFeeds, error: cacheError } = await supabase
+        .from('cached_feeds')
+        .select('*')
+        .in('category', categoriesToUse)
+        .order('published_at', { ascending: false })
+        .limit(100);
+
+      if (cacheError) throw cacheError;
+
+      if (cachedFeeds && cachedFeeds.length > 0) {
+        console.log('Using cached feeds:', cachedFeeds.length);
+        setAllNews(cachedFeeds);
+        setArticles(cachedFeeds);
+        return;
+      }
+
+      // Fallback to direct RSS fetch if cache is empty
       const { data, error } = await supabase.functions.invoke('fetch-rss-feeds', {
         body: { categories: categoriesToUse }
       });
@@ -160,7 +178,7 @@ const TodaysFeeds = () => {
       const fetchedArticles = data.articles || [];
       const customTerms = data.customTerms || [];
       
-      console.log('Fetched articles:', fetchedArticles.length);
+      console.log('Fetched fresh articles:', fetchedArticles.length);
       console.log('Custom terms:', customTerms);
       
       setAllNews(fetchedArticles);
