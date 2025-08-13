@@ -157,7 +157,7 @@ const TodaysFeeds = () => {
         .select('*')
         .in('category', categoriesToUse)
         .order('published_at', { ascending: false })
-        .limit(100);
+        .limit(25);
 
       if (cacheError) throw cacheError;
 
