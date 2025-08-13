@@ -95,14 +95,13 @@ const TodaysFeeds = () => {
   }, [allNews, userInterests]);
 
   useEffect(() => {
-    loadUserPreferences();
+    // Only load preferences, don't fetch feeds yet
+    loadUserPreferencesOnly();
   }, []);
 
-  const loadUserPreferences = async () => {
+  const loadUserPreferencesOnly = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      // Start with locally cached interests if available
-      let currentInterests = userInterests && userInterests.length > 0 ? userInterests : ['Technology'];
       
       if (user) {
         // Track user activity when they visit the feed page
@@ -125,32 +124,25 @@ const TodaysFeeds = () => {
         if (preferences) {
           const allInterests = [...(preferences.interests || []), ...(preferences.custom_interests || [])];
           if (allInterests.length > 0) {
-            currentInterests = allInterests;
             setUserInterests(allInterests);
             try { localStorage.setItem('bf_user_interests', JSON.stringify(allInterests)); } catch (_) {}
           }
         }
+
+        // Load user's existing liked/saved sets
+        const [{ data: liked }, { data: saved }] = await Promise.all([
+          supabase.from('liked_articles').select('article_link').eq('user_id', user.id),
+          supabase.from('saved_articles').select('article_link').eq('user_id', user.id)
+        ]);
+        if (liked) setLikedArticles(new Set(liked.map((r: any) => r.article_link)));
+        if (saved) setSavedArticles(new Set(saved.map((r: any) => r.article_link)));
       }
       
-      await fetchFeedsData(currentInterests);
-
-      // Load user's existing liked/saved sets so icons reflect DB state
-      try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser) {
-          const [{ data: liked }, { data: saved }] = await Promise.all([
-            supabase.from('liked_articles').select('article_link').eq('user_id', currentUser.id),
-            supabase.from('saved_articles').select('article_link').eq('user_id', currentUser.id)
-          ]);
-          if (liked) setLikedArticles(new Set(liked.map((r: any) => r.article_link)));
-          if (saved) setSavedArticles(new Set(saved.map((r: any) => r.article_link)));
-        }
-      } catch (e) {
-        console.error('Error loading liked/saved sets:', e);
-      }
+      // Don't fetch feeds automatically
+      setLoading(false);
     } catch (error) {
       console.error('Error loading preferences:', error);
-      await fetchFeedsData(['Technology', 'AI']);
+      setLoading(false);
     }
   };
 
@@ -233,8 +225,9 @@ const TodaysFeeds = () => {
         }
       }
       
-      // Refetch articles with new interests
-      await fetchFeedsData(newInterests);
+      // Don't automatically fetch on interest change
+      // Let the user click the "Load My Feed" button instead
+      setArticles([]); // Clear existing articles
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
@@ -445,67 +438,83 @@ const TodaysFeeds = () => {
 
         {/* Articles */}
         <div className="space-y-6">
-          {articles.map((article, index) => (
-            <article key={index} className="bg-card border rounded-lg p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="bg-accent text-accent-foreground">
-                    {article.category}
-                  </Badge>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {formatTimeAgo(article.publishedAt)}
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  AI: {article.ai_score || 75}%
-                </div>
-              </div>
-
-              <h3 className="text-xl font-semibold text-card-foreground mb-3">
-                {article.title}
-              </h3>
-
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                {article.description}
+          {articles.length === 0 && !loading ? (
+            <div className="text-center py-8">
+              <h3 className="text-xl font-semibold mb-4">Select Your Interests to Start</h3>
+              <p className="text-muted-foreground mb-4">
+                Choose your interests above to personalize your news feed.
               </p>
+              <Button 
+                onClick={() => fetchFeedsData(userInterests)} 
+                variant="default"
+                size="lg"
+                disabled={userInterests.length === 0 || loading}
+                className="font-mono uppercase tracking-wide"
+              >
+                Load My Feed
+              </Button>
+            </div>
+          ) : articles.map((article, index) => (
+                <article key={index} className="bg-card border rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="secondary" className="bg-accent text-accent-foreground">
+                        {article.category}
+                      </Badge>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {formatTimeAgo(article.publishedAt)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      AI: {article.ai_score || 75}%
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="p-2"
-                    onClick={() => handleLike(article.link)}
-                  >
-                    <Heart className={`w-4 h-4 ${likedArticles.has(article.link) ? 'fill-red-500 text-red-500' : ''}`} />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="p-2"
-                    onClick={() => handleSave(article.link)}
-                  >
-                    <Bookmark className={`w-4 h-4 ${savedArticles.has(article.link) ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="p-2"
-                    onClick={() => handleDismiss(article.link)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleReadMore(article.link)}
-                >
-                  Read More
-                </Button>
-              </div>
-            </article>
+                  <h3 className="text-xl font-semibold text-card-foreground mb-3">
+                    {article.title}
+                  </h3>
+
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    {article.description}
+                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="p-2"
+                        onClick={() => handleLike(article.link)}
+                      >
+                        <Heart className={`w-4 h-4 ${likedArticles.has(article.link) ? 'fill-red-500 text-red-500' : ''}`} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="p-2"
+                        onClick={() => handleSave(article.link)}
+                      >
+                        <Bookmark className={`w-4 h-4 ${savedArticles.has(article.link) ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="p-2"
+                        onClick={() => handleDismiss(article.link)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleReadMore(article.link)}
+                    >
+                      Read More
+                    </Button>
+                  </div>
+                </article>
           ))}
         </div>
       </main>
@@ -514,6 +523,6 @@ const TodaysFeeds = () => {
       <ChatBot articles={articles} />
     </div>
   );
-};
+}
 
 export default TodaysFeeds;

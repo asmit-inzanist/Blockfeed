@@ -10,7 +10,16 @@ import AccountPage from "./pages/AccountPage";
 import NotFound from "./pages/NotFound";
 import Features from "./pages/Features";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // Data remains fresh for 5 minutes
+      gcTime: 30 * 60 * 1000, // Cache persists for 30 minutes
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      retry: 1, // Only retry failed requests once
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
