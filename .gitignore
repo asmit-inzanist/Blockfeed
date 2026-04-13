@@ -25,3 +25,5 @@ dist-ssr
 *.env
 **/.env
 supabase/functions/**/.env
+supabase/.temp/
+
