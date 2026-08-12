@@ -1,108 +1,106 @@
 # BlockFeed
 
-A cyberpunk-inspired news aggregation platform that combines AI-powered content curation with a retro-futuristic aesthetic. BlockFeed delivers personalized news feeds based on your interests, featuring real-time updates and intelligent topic categorization.
+A lightweight news aggregation API with NLP-based topic classification.
 
-## Features
+## What it does
 
-- **AI-Powered News Curation**: Intelligent selection and categorization of news articles
-- **Personalized Feed**: Customizable interest selection for tailored content delivery
-- **Daily Briefings**: Automated email digests of your most relevant news
-- **Topic Suggestions**: User-driven content expansion through topic suggestions
-- **Retro-Futuristic UI**: Cyberpunk-inspired design with modern functionality
-- **Real-Time Updates**: Fresh content through automated RSS feed processing
+1. **Ingests** real news articles from [NewsAPI.org](https://newsapi.org/)
+2. **Classifies** each article into topics (`technology`, `sports`, `politics`, `business`, `health`, `science`, `entertainment`, or `general`) using TF-IDF + Cosine Similarity
+3. **Serves** a personalized feed via a FastAPI REST API
 
-## Tech Stack
+## How the classifier works
 
-This project is built with modern web technologies:
+The topic classification uses two core NLP concepts — no deep learning, no pretrained models, fully explainable:
 
-- **Frontend**
-  - React with TypeScript
-  - Vite for build tooling
-  - shadcn/ui components
-  - Tailwind CSS for styling
-  
-- **Backend**
-  - Supabase for database and authentication
-  - Edge Functions for serverless computing
-  - RSS feed processing
-  - Email notification system
+### TF-IDF (Term Frequency–Inverse Document Frequency)
+- **TF** = how often a word appears in a given document
+- **IDF** = how rare a word is across all documents in the corpus
+- **TF-IDF = TF × IDF** — words that appear frequently in one document but rarely elsewhere get high scores. These are the "distinguishing" words
+- We use scikit-learn's `TfidfVectorizer` to turn each article's text into a numeric vector of these scores
 
-## Getting Started
+### Cosine Similarity & Thresholding
+- Measures the angle between two vectors (not their magnitude):
+  $$\text{Cosine Similarity}(A, B) = \frac{A \cdot B}{\|A\| \times \|B\|}$$
+- Because category keyword reference vectors are longer than short article headlines/snippets, cosine similarity values naturally land between **0.02 and 0.10**.
+- We set a minimum threshold of `0.01`:
+  - Articles with keyword overlap score $> 0.01$ and match their top category.
+  - Articles with $0.00$ keyword overlap (e.g. local accidents or natural disasters) fall back to `"general"` instead of forcing a bad match.
 
-1. **Clone the repository**
-```sh
-git clone https://github.com/asmit-inzanist/Blockfeed.git
-cd Blockfeed
+### The classification approach
+1. We define **reference keyword lists** for each topic category
+2. For each article, we build a small corpus containing the article text and all reference texts
+3. We fit TF-IDF on this corpus and compute cosine similarity between the article vector and each reference vector
+4. The category with the highest similarity score wins (falling back to `"general"` if score $< 0.01$)
+
+## Setup
+
+### 1. Get a NewsAPI key
+Sign up at [newsapi.org](https://newsapi.org/) (free tier is fine).
+
+### 2. Configure environment
+```bash
+# Create .env and add your API key:
+NEWSAPI_KEY=your_actual_key_here
 ```
 
-2. **Install dependencies**
-```sh
-npm install
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
 ```
 
-3. **Set up environment variables**
-Create a `.env` file in the root directory with the following variables:
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+### 4. Run the API
+```bash
+uvicorn main:app --reload
 ```
 
-4. **Start the development server**
-```sh
-npm run dev
-```
+The API will be available at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
 
-The application will be available at `http://localhost:5173`
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/ingest` | Fetch new articles from NewsAPI and classify them |
+| `GET` | `/articles?limit=20&offset=0` | List all articles (paginated) |
+| `GET` | `/feed?interests=technology,sports` | Personalized feed by interest categories |
+| `GET` | `/categories` | List categories with article counts |
+
+### Examples
+
+```bash
+# Ingest articles
+curl -X POST "http://localhost:8000/ingest?page_size=30"
+
+# Get all articles
+curl "http://localhost:8000/articles?limit=10"
+
+# Get personalized feed (supports comma-separated categories)
+curl "http://localhost:8000/feed?interests=technology,health"
+
+# See category breakdown
+curl "http://localhost:8000/categories"
+```
 
 ## Project Structure
 
 ```
-Blockfeed/
-├── src/
-│   ├── components/     # React components
-│   ├── hooks/         # Custom React hooks
-│   ├── integrations/  # Third-party service integrations
-│   ├── lib/          # Utility functions
-│   └── pages/        # Page components
-├── supabase/
-│   ├── functions/    # Edge Functions
-│   └── migrations/   # Database migrations
-└── public/          # Static assets
+blockfeed/
+├── main.py           # FastAPI app + routes
+├── ingest.py         # Fetches and stores news articles
+├── classifier.py     # TF-IDF + cosine similarity topic classification
+├── db.py             # SQLite setup/connection helper
+├── requirements.txt  # Python dependencies
+├── .env.example      # Environment variable template
+└── README.md         # This file
 ```
 
-## Development
+## What a more advanced version would look like
 
-- Run tests: `npm test`
-- Build for production: `npm run build`
-- Format code: `npm run format`
-- Lint code: `npm run lint`
+This project intentionally stays simple. A production-grade version could use:
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Deployment
-
-This project is configured for deployment on Vercel. To deploy:
-
-1. Push your code to GitHub
-2. Import your repository in Vercel
-3. Set up the following environment variables in your Vercel project settings:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Deploy!
-
-The deployment will automatically handle:
-- Build optimization
-- Asset compression
-- SPA routing
-- HTTPS by default
-- Edge CDN distribution
-
-## License
-
-Copyright © 2025 BlockFeed. All rights reserved.
+- **Supervised classification**: Train a Naive Bayes, SVM, or logistic regression model on a labeled dataset of articles. This would learn category boundaries from real data instead of hand-written keyword lists
+- **Pretrained embeddings**: Use word2vec, GloVe, or sentence-transformers to represent articles as dense vectors. These capture semantic meaning (e.g., "automobile" ≈ "car") rather than just exact word matches
+- **Transformer models**: Fine-tune a model like BERT or DistilBERT on a topic classification dataset for state-of-the-art accuracy
+- **Database upgrade**: PostgreSQL with full-text search, connection pooling, and proper migrations
+- **User accounts & auth**: JWT-based authentication with saved user preferences
+- **Caching**: Redis for frequently-accessed feeds and rate-limited API calls
+- **Automated Refreshes**: APScheduler or Celery background workers to run ingestion on a periodic cron schedule
